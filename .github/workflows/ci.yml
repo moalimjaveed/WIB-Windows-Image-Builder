@@ -86,7 +86,7 @@ jobs:
       - name: Strict release gate ledger lint
         shell: powershell
         run: |
-          node .\.agents\skills\unlazy\scripts\gate-lint.mjs --strict GATES.md
+          node .\scripts\lint\gate-lint.mjs --strict GATES.md
 
       - name: Validate built-in profiles
         shell: powershell

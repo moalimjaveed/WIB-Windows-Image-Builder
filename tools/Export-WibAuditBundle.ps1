@@ -106,8 +106,8 @@ $devSkillFiles = @(
     '.agents\skills\wib-dev\references\testing.md',
     '.agents\skills\wib-dev\references\verification.md',
     '.agents\skills\wib-dev\references\wim-esd.md',
-    '.agents\skills\unlazy\scripts\gate-check.mjs',
-    '.agents\skills\unlazy\scripts\gate-lint.mjs'
+    'scripts\lint\gate-check.mjs',
+    'scripts\lint\gate-lint.mjs'
 )
 
 # 1. Run smoke tests first so smoke_results.json is generated fresh and included in collected files
