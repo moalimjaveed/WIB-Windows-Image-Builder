@@ -81,6 +81,7 @@ jobs:
       - name: Run behavioral release gates suite (G1-G22)
         shell: powershell
         run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\Export-WibAuditBundle.ps1 -OutputFile WIB_AUDIT_ALL_FILES.txt
           powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\verify-gates.ps1 -Gate All
 
       - name: Strict release gate ledger lint

@@ -335,6 +335,17 @@ Start-Sleep -Seconds 15
 function Test-GateG5 {
     # G5: Audit bundle contains smoke_results.json with passing results
     $bundleFile = Join-Path $repoRoot 'WIB_AUDIT_ALL_FILES.txt'
+    $jsonPath = Join-Path $repoRoot 'smoke_results.json'
+
+    # If the bundle does not exist on disk (e.g. fresh checkout in CI where WIB_*.txt is git-ignored),
+    # generate it dynamically via Export-WibAuditBundle.ps1
+    if (-not (Test-Path -LiteralPath $bundleFile) -or -not (Test-Path -LiteralPath $jsonPath)) {
+        $exportScript = Join-Path $repoRoot 'tools\Export-WibAuditBundle.ps1'
+        if (Test-Path -LiteralPath $exportScript) {
+            & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $exportScript -OutputFile 'WIB_AUDIT_ALL_FILES.txt'
+        }
+    }
+
     if (-not (Test-Path -LiteralPath $bundleFile)) {
         throw "G5 failed: WIB_AUDIT_ALL_FILES.txt does not exist"
     }

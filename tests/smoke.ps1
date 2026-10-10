@@ -7005,6 +7005,24 @@ finally {
     Remove-Item -LiteralPath $tmp -Recurse -Force -ErrorAction SilentlyContinue
 }
 
+$statusStr = 'FAIL'
+$codeVal = 1
+if ($script:fails -eq 0) {
+    $statusStr = 'pass'
+    $codeVal = 0
+}
+$smokeResultObj = [ordered]@{
+    timestamp  = (Get-Date).ToString('o')
+    exitCode   = $codeVal
+    total      = ($script:passes + $script:fails)
+    passed     = $script:passes
+    failed     = $script:fails
+    status     = $statusStr
+}
+try {
+    $smokeResultObj | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath (Join-Path $root 'smoke_results.json') -Encoding UTF8 -ErrorAction SilentlyContinue
+} catch {}
+
 if ($script:fails -gt 0) {
     Write-Host "`n$($script:fails) check(s) FAILED" -ForegroundColor Red
     exit 1
