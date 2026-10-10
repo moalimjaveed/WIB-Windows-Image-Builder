@@ -54,8 +54,12 @@ New-Item -ItemType Directory -Force -Path $captureDir, $mountDir | Out-Null
 
 try {
     # Prepare minimal baseline contents (< 1 KB total)
+    $winDir = Join-Path $captureDir 'Windows'
+    $sys32Dir = Join-Path $winDir 'System32'
+    New-Item -ItemType Directory -Force -Path $sys32Dir | Out-Null
     Set-Content -LiteralPath (Join-Path $captureDir 'baseline.txt') -Value 'Initial image baseline content'
     Set-Content -LiteralPath (Join-Path $captureDir 'config.ini') -Value "[WIB]`r`nVersion=1.0`r`nStage=0"
+    Set-Content -LiteralPath (Join-Path $sys32Dir 'ntoskrnl.exe') -Value 'MOCK_KERNEL'
 
     # Step 1: Capture tiny WIM with New-WindowsImage
     Write-Host "[1/6] Capturing tiny scratch WIM with New-WindowsImage..." -ForegroundColor Cyan
@@ -271,7 +275,11 @@ try {
     $procWim = Join-Path $procSourcesDir 'install.wim'
 
     New-Item -ItemType Directory -Force -Path $procCaptureDir, $procMountDir, $procSourcesDir | Out-Null
+    $procWinDir = Join-Path $procCaptureDir 'Windows'
+    $procSys32Dir = Join-Path $procWinDir 'System32'
+    New-Item -ItemType Directory -Force -Path $procSys32Dir | Out-Null
     Set-Content -LiteralPath (Join-Path $procCaptureDir 'baseline.txt') -Value 'Process 1 baseline content'
+    Set-Content -LiteralPath (Join-Path $procSys32Dir 'ntoskrnl.exe') -Value 'MOCK_KERNEL'
     New-WindowsImage -CapturePath $procCaptureDir -ImagePath $procWim -Name 'WibProcessBase' -Description 'Out of process resume test image' -CheckIntegrity -ErrorAction Stop | Out-Null
 
     # Create minimal valid test profile

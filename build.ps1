@@ -37,7 +37,8 @@ param(
     [string]$DeltaFromManifest,
     [string]$JournalPath,
     [string]$RegistryRoot,
-    [switch]$Gui
+    [switch]$Gui,
+    [switch]$NoElevate
 )
 
 $ErrorActionPreference = 'Stop'
@@ -50,7 +51,9 @@ if ($ExpectedIsoSha256) {
 if ($Gui) {
     $builderGui = Join-Path $toolRoot 'tools\WibBuilderGui.ps1'
     if (Test-Path -LiteralPath $builderGui) {
-        & $builderGui
+        $guiSplat = @{}
+        if ($NoElevate) { $guiSplat['NoElevate'] = $true }
+        & $builderGui @guiSplat
         return
     }
 }
@@ -79,7 +82,7 @@ if ($PSBoundParameters.Count -eq 0) {
     }
     Write-Host ""
     Write-Host "  QUICK START / CLI USAGE:" -ForegroundColor Cyan
-    Write-Host "  1. Launch Desktop GUI:     " -NoNewline; Write-Host ".\build.ps1 -Gui" -ForegroundColor Yellow; Write-Host "                             (or .\tools\launch-gui.ps1)" -ForegroundColor DarkGray
+    Write-Host "  1. Launch Desktop GUI:     " -NoNewline; Write-Host ".\build.ps1 -Gui" -ForegroundColor Yellow; Write-Host "                             (or .\tools\launch-gui.ps1 -NoElevate for Preview)" -ForegroundColor DarkGray
     Write-Host "  2. Validate a Profile:     " -NoNewline; Write-Host ".\build.ps1 -Command validate -ProfileName balanced" -ForegroundColor Yellow
     Write-Host "  3. List Registered Modules:" -NoNewline; Write-Host ".\build.ps1 -Command list" -ForegroundColor Yellow
     Write-Host "  4. Preview Execution Plan: " -NoNewline; Write-Host ".\build.ps1 -IsoPath `"D:\Win11.iso`" -Command plan" -ForegroundColor Yellow
@@ -93,7 +96,12 @@ if ($PSBoundParameters.Count -eq 0) {
         if ($choice -match '^[gG]') {
             $builderGui = Join-Path $toolRoot 'tools\WibBuilderGui.ps1'
             if (Test-Path -LiteralPath $builderGui) {
-                & $builderGui
+                $guiSplat = @{}
+                if (-not $isAdminSession) {
+                    Write-Host "  Launching GUI in Preview Mode (No elevation prompt)..." -ForegroundColor Cyan
+                    $guiSplat['NoElevate'] = $true
+                }
+                & $builderGui @guiSplat
             }
             return
         } elseif ($choice -match '^[vV]') {

@@ -14,7 +14,9 @@ param(
     [switch]$NoElevate,
     [string]$ScreenshotPath,
     [switch]$CloseAfterScreenshot,
-    [int]$InitialTab = 0
+    [int]$InitialTab = 0,
+    [int]$Width = 960,
+    [int]$Height = 840
 )
 
 $ErrorActionPreference = 'Stop'
@@ -86,37 +88,51 @@ $fonts = @{
 # ---------------------------------------------------------------------------
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "WIB: Windows Image Builder Studio"
-$form.Size = New-Object System.Drawing.Size(960, 840)
-$form.MinimumSize = New-Object System.Drawing.Size(920, 760)
+$form.Size = New-Object System.Drawing.Size($Width, $Height)
+$form.MinimumSize = New-Object System.Drawing.Size(920, 700)
 $form.StartPosition = 'CenterScreen'
 $form.Font = $fonts.Body
 $form.BackColor = $theme.BgWindow
 
 # ---------------------------------------------------------------------------
-# 1. Header Area: Integrated directly on canvas (NO boxed container, NO bottom line)
+# 1. Header Area: 2-column TableLayoutPanel (100% + AutoSize)
 # ---------------------------------------------------------------------------
-$pnlHeader = New-Object System.Windows.Forms.Panel
+$pnlHeader = New-Object System.Windows.Forms.TableLayoutPanel
 $pnlHeader.Dock = 'Top'
-$pnlHeader.Height = 72
+$pnlHeader.Height = 66
 $pnlHeader.BackColor = $theme.BgWindow
-$form.Controls.Add($pnlHeader)
+$pnlHeader.Padding = New-Object System.Windows.Forms.Padding(24, 12, 24, 0)
+$pnlHeader.RowCount = 1
+$pnlHeader.ColumnCount = 2
+[void]$pnlHeader.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+[void]$pnlHeader.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::AutoSize)))
+[void]$pnlHeader.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+
+# Left cell: Title & Subtitle in FlowLayoutPanel
+$pnlTitleGroup = New-Object System.Windows.Forms.FlowLayoutPanel
+$pnlTitleGroup.Dock = 'Fill'
+$pnlTitleGroup.FlowDirection = 'TopDown'
+$pnlTitleGroup.WrapContents = $false
+$pnlTitleGroup.Margin = New-Object System.Windows.Forms.Padding(0)
 
 $lblAppTitle = New-Object System.Windows.Forms.Label
 $lblAppTitle.Text = "Windows Image Builder Studio"
 $lblAppTitle.Font = $fonts.AppTitle
 $lblAppTitle.ForeColor = $theme.TextPrimary
-$lblAppTitle.Location = New-Object System.Drawing.Point(24, 14)
 $lblAppTitle.AutoSize = $true
-$pnlHeader.Controls.Add($lblAppTitle)
+$lblAppTitle.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 2)
+$pnlTitleGroup.Controls.Add($lblAppTitle)
 
 $lblAppSub = New-Object System.Windows.Forms.Label
 $lblAppSub.Text = "Hardware-adaptive, verifiable Windows 11 offline servicing engine"
 $lblAppSub.Font = $fonts.Small
 $lblAppSub.ForeColor = $theme.TextSecondary
-$lblAppSub.Location = New-Object System.Drawing.Point(25, 44)
 $lblAppSub.AutoSize = $true
-$pnlHeader.Controls.Add($lblAppSub)
+$lblAppSub.Margin = New-Object System.Windows.Forms.Padding(1, 0, 0, 0)
+$pnlTitleGroup.Controls.Add($lblAppSub)
+$pnlHeader.Controls.Add($pnlTitleGroup, 0, 0)
 
+# Right cell: Session info badge
 $lblSessionInfo = New-Object System.Windows.Forms.Label
 if ($isAdmin) {
     $lblSessionInfo.Text = "Elevated Session (Administrator Servicing Active)"
@@ -125,38 +141,70 @@ if ($isAdmin) {
 }
 $lblSessionInfo.Font = $fonts.Small
 $lblSessionInfo.ForeColor = $theme.TextSecondary
-$lblSessionInfo.Location = New-Object System.Drawing.Point(600, 18)
-$lblSessionInfo.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
 $lblSessionInfo.AutoSize = $true
-$pnlHeader.Controls.Add($lblSessionInfo)
+$lblSessionInfo.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
+$lblSessionInfo.Margin = New-Object System.Windows.Forms.Padding(0, 6, 0, 0)
+$pnlHeader.Controls.Add($lblSessionInfo, 1, 0)
+$form.Controls.Add($pnlHeader)
 
 # ---------------------------------------------------------------------------
 # 2. Modern Navigation Bar (Tabs)
 # ---------------------------------------------------------------------------
-$pnlNav = New-Object System.Windows.Forms.Panel
+$pnlNav = New-Object System.Windows.Forms.FlowLayoutPanel
 $pnlNav.Dock = 'Top'
 $pnlNav.Height = 36
 $pnlNav.BackColor = $theme.BgWindow
+$pnlNav.Padding = New-Object System.Windows.Forms.Padding(24, 0, 24, 0)
+$pnlNav.Margin = New-Object System.Windows.Forms.Padding(0)
 $form.Controls.Add($pnlNav)
 
 $pnlContent = New-Object System.Windows.Forms.Panel
 $pnlContent.Dock = 'Fill'
 $pnlContent.BackColor = $theme.BgWindow
 
-$tabStudio = New-Object System.Windows.Forms.Panel
+# Root Tab Containers (TableLayoutPanel)
+$tabStudio = New-Object System.Windows.Forms.TableLayoutPanel
 $tabStudio.Dock = 'Fill'
 $tabStudio.BackColor = $theme.BgWindow
+$tabStudio.Padding = New-Object System.Windows.Forms.Padding(24, 6, 24, 16)
+$tabStudio.ColumnCount = 1
+$tabStudio.RowCount = 7
+[void]$tabStudio.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+[void]$tabStudio.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
+[void]$tabStudio.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
+[void]$tabStudio.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
+[void]$tabStudio.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
+[void]$tabStudio.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
+[void]$tabStudio.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
+[void]$tabStudio.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
 $pnlContent.Controls.Add($tabStudio)
 
-$tabModules = New-Object System.Windows.Forms.Panel
+$tabModules = New-Object System.Windows.Forms.TableLayoutPanel
 $tabModules.Dock = 'Fill'
 $tabModules.BackColor = $theme.BgWindow
+$tabModules.Padding = New-Object System.Windows.Forms.Padding(24, 8, 24, 16)
+$tabModules.ColumnCount = 1
+$tabModules.RowCount = 4
+[void]$tabModules.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+[void]$tabModules.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
+[void]$tabModules.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 65)))
+[void]$tabModules.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
+[void]$tabModules.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 35)))
 $tabModules.Visible = $false
 $pnlContent.Controls.Add($tabModules)
 
-$tabReports = New-Object System.Windows.Forms.Panel
+$tabReports = New-Object System.Windows.Forms.TableLayoutPanel
 $tabReports.Dock = 'Fill'
 $tabReports.BackColor = $theme.BgWindow
+$tabReports.Padding = New-Object System.Windows.Forms.Padding(24, 8, 24, 16)
+$tabReports.ColumnCount = 1
+$tabReports.RowCount = 5
+[void]$tabReports.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+[void]$tabReports.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
+[void]$tabReports.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
+[void]$tabReports.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 45)))
+[void]$tabReports.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
+[void]$tabReports.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 55)))
 $tabReports.Visible = $false
 $pnlContent.Controls.Add($tabReports)
 
@@ -165,7 +213,6 @@ $tabPages = @($tabStudio, $tabModules, $tabReports)
 # Navigation Buttons
 $tabNames = @("Studio & Build", "Module & Profile Inspector", "Build Artifacts & Reports")
 $navButtons = New-Object System.Collections.ArrayList
-$navX = 24
 
 function Select-Tab {
     param([int]$Index)
@@ -189,8 +236,8 @@ for ($i = 0; $i -lt $tabNames.Count; $i++) {
     $nBtn.Tag = $i
     $nBtn.UseMnemonic = $false
     $nBtn.Font = $fonts.Body
-    $nBtn.Location = New-Object System.Drawing.Point($navX, 2)
     $nBtn.Size = New-Object System.Drawing.Size(190, 30)
+    $nBtn.Margin = New-Object System.Windows.Forms.Padding(0, 0, 8, 0)
     $nBtn.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
     $nBtn.FlatAppearance.BorderSize = 0
     $nBtn.Cursor = [System.Windows.Forms.Cursors]::Hand
@@ -210,7 +257,6 @@ for ($i = 0; $i -lt $tabNames.Count; $i++) {
     
     $pnlNav.Controls.Add($nBtn)
     [void]$navButtons.Add($nBtn)
-    $navX += 196
 }
 
 # Add pnlContent to form (Dock order: Fill first, then Top panels)
@@ -220,161 +266,232 @@ $form.Controls.SetChildIndex($pnlNav, 1)
 $form.Controls.SetChildIndex($pnlHeader, 2)
 
 # ===========================================================================
-# TAB 1: STUDIO & BUILD WORKSPACE
+# TAB 1: STUDIO & BUILD (Automatic Layout Engine via TableLayoutPanel)
 # ===========================================================================
 
-# Preflight Summary Bar (Flat, calm neutral)
+# ---------------- Row 0: Preflight Summary ----------------
 $pnlPreflight = New-Object System.Windows.Forms.Panel
-$pnlPreflight.Location = New-Object System.Drawing.Point(24, 8)
-$pnlPreflight.Size = New-Object System.Drawing.Size(896, 32)
+$pnlPreflight.Dock = 'Fill'
+$pnlPreflight.Height = 32
 $pnlPreflight.BackColor = $theme.BgSurface
 $pnlPreflight.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
-$tabStudio.Controls.Add($pnlPreflight)
+$pnlPreflight.Padding = New-Object System.Windows.Forms.Padding(12, 6, 12, 6)
+$pnlPreflight.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 8)
 
 $lblPreflightSummary = New-Object System.Windows.Forms.Label
 $lblPreflightSummary.Text = "Privileges: Standard User    |    Source ISO: Not selected    |    Workspace: Checking...    |    Profile: balanced"
 $lblPreflightSummary.Font = $fonts.Small
 $lblPreflightSummary.ForeColor = $theme.TextSecondary
-$lblPreflightSummary.Location = New-Object System.Drawing.Point(14, 7)
-$lblPreflightSummary.AutoSize = $true
+$lblPreflightSummary.Dock = 'Fill'
+$lblPreflightSummary.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
 $pnlPreflight.Controls.Add($lblPreflightSummary)
+$tabStudio.Controls.Add($pnlPreflight, 0, 0)
 
-# Configuration Section Header (No box outline)
+# ---------------- Row 1: Configuration Header ----------------
+$pnlConfigHdr = New-Object System.Windows.Forms.FlowLayoutPanel
+$pnlConfigHdr.Dock = 'Fill'
+$pnlConfigHdr.FlowDirection = 'TopDown'
+$pnlConfigHdr.AutoSize = $true
+$pnlConfigHdr.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 6)
+
 $lblConfigHdr = New-Object System.Windows.Forms.Label
 $lblConfigHdr.Text = "Configuration"
 $lblConfigHdr.Font = $fonts.SectionHdr
 $lblConfigHdr.ForeColor = $theme.TextPrimary
-$lblConfigHdr.Location = New-Object System.Drawing.Point(24, 48)
 $lblConfigHdr.AutoSize = $true
-$tabStudio.Controls.Add($lblConfigHdr)
+$lblConfigHdr.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 2)
+$pnlConfigHdr.Controls.Add($lblConfigHdr)
 
 $lblConfigDesc = New-Object System.Windows.Forms.Label
-$lblConfigDesc.Text = "Specify the source installation image, target hardware, and servicing profile."
+$lblConfigDesc.Text = "Specify the source installation image, staging workspace, and target hardware profile."
 $lblConfigDesc.Font = $fonts.Small
 $lblConfigDesc.ForeColor = $theme.TextSecondary
-$lblConfigDesc.Location = New-Object System.Drawing.Point(25, 69)
 $lblConfigDesc.AutoSize = $true
-$tabStudio.Controls.Add($lblConfigDesc)
+$pnlConfigHdr.Controls.Add($lblConfigDesc)
+$tabStudio.Controls.Add($pnlConfigHdr, 0, 1)
 
-# Fields container (Clean, borderless, symmetric layout)
-$pnlFields = New-Object System.Windows.Forms.Panel
-$pnlFields.Location = New-Object System.Drawing.Point(24, 90)
-$pnlFields.Size = New-Object System.Drawing.Size(896, 178)
-$pnlFields.BackColor = $theme.BgWindow
-$tabStudio.Controls.Add($pnlFields)
+# ---------------- Row 2: Inputs Grid (Nested TableLayoutPanel) ----------------
+$pnlInputs = New-Object System.Windows.Forms.TableLayoutPanel
+$pnlInputs.Dock = 'Fill'
+$pnlInputs.AutoSize = $true
+$pnlInputs.ColumnCount = 1
+$pnlInputs.RowCount = 5
+$pnlInputs.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 8)
+[void]$pnlInputs.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+for ($r = 0; $r -lt 5; $r++) {
+    [void]$pnlInputs.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
+}
 
-# Row 1: Source ISO
+# Input 1: Source ISO Label
 $lblIso = New-Object System.Windows.Forms.Label
 $lblIso.Text = "Source ISO Image"
 $lblIso.Font = $fonts.Small
 $lblIso.ForeColor = $theme.TextSecondary
-$lblIso.Location = New-Object System.Drawing.Point(0, 0)
 $lblIso.AutoSize = $true
-$pnlFields.Controls.Add($lblIso)
+$lblIso.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 2)
+$pnlInputs.Controls.Add($lblIso, 0, 0)
+
+# Input 1: Source ISO Box + Browse (2-column layout: 100% + 105px)
+$tblIsoRow = New-Object System.Windows.Forms.TableLayoutPanel
+$tblIsoRow.Dock = 'Fill'
+$tblIsoRow.Height = 28
+$tblIsoRow.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 8)
+$tblIsoRow.ColumnCount = 2
+$tblIsoRow.RowCount = 1
+[void]$tblIsoRow.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+[void]$tblIsoRow.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Absolute, 105)))
+[void]$tblIsoRow.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
 
 $txtIso = New-Object System.Windows.Forms.TextBox
 $txtIso.Font = $fonts.Body
-$txtIso.Location = New-Object System.Drawing.Point(0, 20)
-$txtIso.Size = New-Object System.Drawing.Size(785, 24)
-$pnlFields.Controls.Add($txtIso)
+$txtIso.Dock = 'Fill'
+$txtIso.Margin = New-Object System.Windows.Forms.Padding(0, 2, 8, 2)
+$tblIsoRow.Controls.Add($txtIso, 0, 0)
 
 $btnBrowseIso = New-Object System.Windows.Forms.Button
 $btnBrowseIso.Text = "Browse..."
 $btnBrowseIso.UseMnemonic = $false
 $btnBrowseIso.Font = $fonts.Body
-$btnBrowseIso.Location = New-Object System.Drawing.Point(795, 18)
-$btnBrowseIso.Size = New-Object System.Drawing.Size(100, 27)
+$btnBrowseIso.Dock = 'Fill'
 $btnBrowseIso.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
 $btnBrowseIso.BackColor = $theme.BtnSecondaryBg
 $btnBrowseIso.ForeColor = $theme.BtnSecondaryFg
-$pnlFields.Controls.Add($btnBrowseIso)
+$btnBrowseIso.Margin = New-Object System.Windows.Forms.Padding(0)
+$tblIsoRow.Controls.Add($btnBrowseIso, 1, 0)
+$pnlInputs.Controls.Add($tblIsoRow, 0, 1)
 
-# Row 2: Staging Workspace (Full width path, matching Row 1)
+# Input 2: Staging Workspace Label
 $lblWork = New-Object System.Windows.Forms.Label
 $lblWork.Text = "Staging Workspace"
 $lblWork.Font = $fonts.Small
 $lblWork.ForeColor = $theme.TextSecondary
-$lblWork.Location = New-Object System.Drawing.Point(0, 54)
 $lblWork.AutoSize = $true
-$pnlFields.Controls.Add($lblWork)
+$lblWork.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 2)
+$pnlInputs.Controls.Add($lblWork, 0, 2)
+
+# Input 2: Staging Workspace Box + Browse
+$tblWorkRow = New-Object System.Windows.Forms.TableLayoutPanel
+$tblWorkRow.Dock = 'Fill'
+$tblWorkRow.Height = 28
+$tblWorkRow.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 8)
+$tblWorkRow.ColumnCount = 2
+$tblWorkRow.RowCount = 1
+[void]$tblWorkRow.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+[void]$tblWorkRow.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Absolute, 105)))
+[void]$tblWorkRow.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
 
 $txtWork = New-Object System.Windows.Forms.TextBox
 $txtWork.Font = $fonts.Body
 $txtWork.Text = Join-Path $toolRoot 'work'
-$txtWork.Location = New-Object System.Drawing.Point(0, 74)
-$txtWork.Size = New-Object System.Drawing.Size(785, 24)
-$pnlFields.Controls.Add($txtWork)
+$txtWork.Dock = 'Fill'
+$txtWork.Margin = New-Object System.Windows.Forms.Padding(0, 2, 8, 2)
+$tblWorkRow.Controls.Add($txtWork, 0, 0)
 
 $btnBrowseWork = New-Object System.Windows.Forms.Button
 $btnBrowseWork.Text = "Browse..."
 $btnBrowseWork.UseMnemonic = $false
 $btnBrowseWork.Font = $fonts.Body
-$btnBrowseWork.Location = New-Object System.Drawing.Point(795, 72)
-$btnBrowseWork.Size = New-Object System.Drawing.Size(100, 27)
+$btnBrowseWork.Dock = 'Fill'
 $btnBrowseWork.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
 $btnBrowseWork.BackColor = $theme.BtnSecondaryBg
 $btnBrowseWork.ForeColor = $theme.BtnSecondaryFg
-$pnlFields.Controls.Add($btnBrowseWork)
+$btnBrowseWork.Margin = New-Object System.Windows.Forms.Padding(0)
+$tblWorkRow.Controls.Add($btnBrowseWork, 1, 0)
+$pnlInputs.Controls.Add($tblWorkRow, 0, 3)
 
-# Row 3: The 3 Selectors side-by-side (Build Profile, Target Edition, Hardware Profile)
+# Input 3: The 3 Selectors (3 equal percentage columns: 33.3%, 33.3%, 33.4%)
+$tblSelectors = New-Object System.Windows.Forms.TableLayoutPanel
+$tblSelectors.Dock = 'Fill'
+$tblSelectors.AutoSize = $true
+$tblSelectors.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 4)
+$tblSelectors.ColumnCount = 3
+$tblSelectors.RowCount = 1
+[void]$tblSelectors.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 33.3)))
+[void]$tblSelectors.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 33.3)))
+[void]$tblSelectors.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 33.4)))
+[void]$tblSelectors.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
+
 # Column 1: Build Profile
+$pnlCol1 = New-Object System.Windows.Forms.TableLayoutPanel
+$pnlCol1.Dock = 'Fill'
+$pnlCol1.AutoSize = $true
+$pnlCol1.Margin = New-Object System.Windows.Forms.Padding(0, 0, 10, 0)
+$pnlCol1.ColumnCount = 1
+$pnlCol1.RowCount = 3
+[void]$pnlCol1.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+
 $lblProfile = New-Object System.Windows.Forms.Label
 $lblProfile.Text = "Build Profile"
 $lblProfile.Font = $fonts.Small
 $lblProfile.ForeColor = $theme.TextSecondary
-$lblProfile.Location = New-Object System.Drawing.Point(0, 108)
 $lblProfile.AutoSize = $true
-$pnlFields.Controls.Add($lblProfile)
+$lblProfile.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 2)
+$pnlCol1.Controls.Add($lblProfile, 0, 0)
 
 $cmbProfile = New-Object System.Windows.Forms.ComboBox
 $cmbProfile.DropDownStyle = 'DropDownList'
 $cmbProfile.Font = $fonts.Body
-$cmbProfile.Location = New-Object System.Drawing.Point(0, 128)
-$cmbProfile.Size = New-Object System.Drawing.Size(260, 24)
-$pnlFields.Controls.Add($cmbProfile)
+$cmbProfile.Dock = 'Fill'
+$pnlCol1.Controls.Add($cmbProfile, 0, 1)
 
 $lblProfileDetails = New-Object System.Windows.Forms.Label
 $lblProfileDetails.Font = $fonts.Small
 $lblProfileDetails.ForeColor = $theme.TextSecondary
-$lblProfileDetails.Location = New-Object System.Drawing.Point(0, 155)
 $lblProfileDetails.AutoSize = $true
-$pnlFields.Controls.Add($lblProfileDetails)
+$lblProfileDetails.Margin = New-Object System.Windows.Forms.Padding(0, 3, 0, 0)
+$pnlCol1.Controls.Add($lblProfileDetails, 0, 2)
+$tblSelectors.Controls.Add($pnlCol1, 0, 0)
 
 # Column 2: Target Edition
+$pnlCol2 = New-Object System.Windows.Forms.TableLayoutPanel
+$pnlCol2.Dock = 'Fill'
+$pnlCol2.AutoSize = $true
+$pnlCol2.Margin = New-Object System.Windows.Forms.Padding(5, 0, 5, 0)
+$pnlCol2.ColumnCount = 1
+$pnlCol2.RowCount = 2
+[void]$pnlCol2.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+
 $lblEdition = New-Object System.Windows.Forms.Label
 $lblEdition.Text = "Target Edition"
 $lblEdition.Font = $fonts.Small
 $lblEdition.ForeColor = $theme.TextSecondary
-$lblEdition.Location = New-Object System.Drawing.Point(300, 108)
 $lblEdition.AutoSize = $true
-$pnlFields.Controls.Add($lblEdition)
+$lblEdition.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 2)
+$pnlCol2.Controls.Add($lblEdition, 0, 0)
 
 $cmbEdition = New-Object System.Windows.Forms.ComboBox
 $cmbEdition.DropDownStyle = 'DropDownList'
 $cmbEdition.Font = $fonts.Body
-$cmbEdition.Location = New-Object System.Drawing.Point(300, 128)
-$cmbEdition.Size = New-Object System.Drawing.Size(260, 24)
+$cmbEdition.Dock = 'Fill'
 [void]$cmbEdition.Items.Add("Auto-detect (Single Edition)")
 for ($idx = 1; $idx -le 11; $idx++) {
     [void]$cmbEdition.Items.Add("Image Index $idx")
 }
 $cmbEdition.SelectedIndex = 0
-$pnlFields.Controls.Add($cmbEdition)
+$pnlCol2.Controls.Add($cmbEdition, 0, 1)
+$tblSelectors.Controls.Add($pnlCol2, 1, 0)
 
 # Column 3: Hardware Profile
+$pnlCol3 = New-Object System.Windows.Forms.TableLayoutPanel
+$pnlCol3.Dock = 'Fill'
+$pnlCol3.AutoSize = $true
+$pnlCol3.Margin = New-Object System.Windows.Forms.Padding(10, 0, 0, 0)
+$pnlCol3.ColumnCount = 1
+$pnlCol3.RowCount = 2
+[void]$pnlCol3.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+
 $lblHardware = New-Object System.Windows.Forms.Label
 $lblHardware.Text = "Hardware Profile"
 $lblHardware.Font = $fonts.Small
 $lblHardware.ForeColor = $theme.TextSecondary
-$lblHardware.Location = New-Object System.Drawing.Point(600, 108)
 $lblHardware.AutoSize = $true
-$pnlFields.Controls.Add($lblHardware)
+$lblHardware.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 2)
+$pnlCol3.Controls.Add($lblHardware, 0, 0)
 
 $cmbHardware = New-Object System.Windows.Forms.ComboBox
 $cmbHardware.DropDownStyle = 'DropDownList'
 $cmbHardware.Font = $fonts.Body
-$cmbHardware.Location = New-Object System.Drawing.Point(600, 128)
-$cmbHardware.Size = New-Object System.Drawing.Size(295, 24)
+$cmbHardware.Dock = 'Fill'
 [void]$cmbHardware.Items.Add("Live Host (CIM Auto-Detect)")
 $specsDir = Join-Path $toolRoot 'specs'
 if (Test-Path -LiteralPath $specsDir) {
@@ -384,167 +501,210 @@ if (Test-Path -LiteralPath $specsDir) {
     }
 }
 $cmbHardware.SelectedIndex = 0
-$pnlFields.Controls.Add($cmbHardware)
+$pnlCol3.Controls.Add($cmbHardware, 0, 1)
+$tblSelectors.Controls.Add($pnlCol3, 2, 0)
 
-# Options & Safety Controls (Clean, inline, no enclosing box)
-$pnlOptions = New-Object System.Windows.Forms.Panel
-$pnlOptions.Location = New-Object System.Drawing.Point(24, 274)
-$pnlOptions.Size = New-Object System.Drawing.Size(896, 52)
-$pnlOptions.BackColor = $theme.BgWindow
-$tabStudio.Controls.Add($pnlOptions)
+$pnlInputs.Controls.Add($tblSelectors, 0, 4)
+$tabStudio.Controls.Add($pnlInputs, 0, 2)
+
+# ---------------- Row 3: Options Checkboxes ----------------
+$pnlOptions = New-Object System.Windows.Forms.FlowLayoutPanel
+$pnlOptions.Dock = 'Fill'
+$pnlOptions.AutoSize = $true
+$pnlOptions.WrapContents = $true
+$pnlOptions.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 8)
 
 $chkDryRun = New-Object System.Windows.Forms.CheckBox
 $chkDryRun.Text = "Dry-run simulation only"
 $chkDryRun.Font = $fonts.Body
 $chkDryRun.ForeColor = $theme.TextPrimary
-$chkDryRun.Location = New-Object System.Drawing.Point(0, 4)
 $chkDryRun.AutoSize = $true
+$chkDryRun.Margin = New-Object System.Windows.Forms.Padding(0, 0, 20, 6)
 $pnlOptions.Controls.Add($chkDryRun)
 
 $chkResume = New-Object System.Windows.Forms.CheckBox
 $chkResume.Text = "Resume from checkpoint"
 $chkResume.Font = $fonts.Body
 $chkResume.ForeColor = $theme.TextPrimary
-$chkResume.Location = New-Object System.Drawing.Point(220, 4)
 $chkResume.AutoSize = $true
+$chkResume.Margin = New-Object System.Windows.Forms.Padding(0, 0, 20, 6)
 $pnlOptions.Controls.Add($chkResume)
 
 $chkDownloadOscd = New-Object System.Windows.Forms.CheckBox
 $chkDownloadOscd.Text = "Download signed oscdimg"
 $chkDownloadOscd.Font = $fonts.Body
 $chkDownloadOscd.ForeColor = $theme.TextPrimary
-$chkDownloadOscd.Location = New-Object System.Drawing.Point(440, 4)
 $chkDownloadOscd.AutoSize = $true
+$chkDownloadOscd.Margin = New-Object System.Windows.Forms.Padding(0, 0, 20, 6)
 $pnlOptions.Controls.Add($chkDownloadOscd)
 
 $chkAcceptRisk = New-Object System.Windows.Forms.CheckBox
 $chkAcceptRisk.Text = "Accept high-risk modules"
 $chkAcceptRisk.Font = $fonts.Body
 $chkAcceptRisk.ForeColor = $theme.TextSecondary
-$chkAcceptRisk.Location = New-Object System.Drawing.Point(0, 28)
 $chkAcceptRisk.AutoSize = $true
+$chkAcceptRisk.Margin = New-Object System.Windows.Forms.Padding(0, 0, 20, 6)
 $pnlOptions.Controls.Add($chkAcceptRisk)
 
 $chkSkipHash = New-Object System.Windows.Forms.CheckBox
 $chkSkipHash.Text = "Skip ISO hash verification"
 $chkSkipHash.Font = $fonts.Body
 $chkSkipHash.ForeColor = $theme.TextSecondary
-$chkSkipHash.Location = New-Object System.Drawing.Point(220, 28)
 $chkSkipHash.AutoSize = $true
+$chkSkipHash.Margin = New-Object System.Windows.Forms.Padding(0, 0, 20, 6)
 $pnlOptions.Controls.Add($chkSkipHash)
+$tabStudio.Controls.Add($pnlOptions, 0, 3)
 
-# Action Buttons Bar (Clean, integrated, NO box border)
-$pnlActions = New-Object System.Windows.Forms.Panel
-$pnlActions.Location = New-Object System.Drawing.Point(24, 332)
-$pnlActions.Size = New-Object System.Drawing.Size(896, 36)
-$pnlActions.BackColor = $theme.BgWindow
-$tabStudio.Controls.Add($pnlActions)
+# ---------------- Row 4: Action Buttons (Left actions + Right utilities) ----------------
+$tblActions = New-Object System.Windows.Forms.TableLayoutPanel
+$tblActions.Dock = 'Fill'
+$tblActions.Height = 36
+$tblActions.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 8)
+$tblActions.ColumnCount = 2
+$tblActions.RowCount = 1
+[void]$tblActions.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+[void]$tblActions.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Absolute, 160)))
+[void]$tblActions.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+
+# Left primary action buttons
+$flowActionsLeft = New-Object System.Windows.Forms.FlowLayoutPanel
+$flowActionsLeft.Dock = 'Fill'
+$flowActionsLeft.Margin = New-Object System.Windows.Forms.Padding(0)
 
 $btnPlan = New-Object System.Windows.Forms.Button
 $btnPlan.Text = "Preview Plan"
 $btnPlan.Font = $fonts.Body
-$btnPlan.Location = New-Object System.Drawing.Point(0, 2)
 $btnPlan.Size = New-Object System.Drawing.Size(125, 32)
 $btnPlan.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
 $btnPlan.BackColor = $theme.AccentBlue
 $btnPlan.ForeColor = [System.Drawing.Color]::White
-$pnlActions.Controls.Add($btnPlan)
+$btnPlan.Margin = New-Object System.Windows.Forms.Padding(0, 0, 8, 0)
+$flowActionsLeft.Controls.Add($btnPlan)
 
 $btnBuild = New-Object System.Windows.Forms.Button
 $btnBuild.Text = "Start Build"
 $btnBuild.Font = $fonts.Body
-$btnBuild.Location = New-Object System.Drawing.Point(135, 2)
 $btnBuild.Size = New-Object System.Drawing.Size(125, 32)
 $btnBuild.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
 $btnBuild.BackColor = $theme.BtnDisabledBg
 $btnBuild.ForeColor = $theme.BtnDisabledFg
 $btnBuild.Enabled = $false
-$pnlActions.Controls.Add($btnBuild)
+$btnBuild.Margin = New-Object System.Windows.Forms.Padding(0, 0, 8, 0)
+$flowActionsLeft.Controls.Add($btnBuild)
 
 $btnValidate = New-Object System.Windows.Forms.Button
 $btnValidate.Text = "Validate Profile"
 $btnValidate.Font = $fonts.Body
-$btnValidate.Location = New-Object System.Drawing.Point(270, 2)
 $btnValidate.Size = New-Object System.Drawing.Size(125, 32)
 $btnValidate.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
 $btnValidate.BackColor = $theme.BtnSecondaryBg
 $btnValidate.ForeColor = $theme.BtnSecondaryFg
-$pnlActions.Controls.Add($btnValidate)
+$btnValidate.Margin = New-Object System.Windows.Forms.Padding(0, 0, 8, 0)
+$flowActionsLeft.Controls.Add($btnValidate)
 
 $btnCancel = New-Object System.Windows.Forms.Button
 $btnCancel.Text = "Cancel"
 $btnCancel.Font = $fonts.Body
-$btnCancel.Location = New-Object System.Drawing.Point(405, 2)
 $btnCancel.Size = New-Object System.Drawing.Size(95, 32)
 $btnCancel.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
 $btnCancel.BackColor = $theme.BtnDisabledBg
 $btnCancel.ForeColor = $theme.BtnDisabledFg
 $btnCancel.Enabled = $false
-$pnlActions.Controls.Add($btnCancel)
+$btnCancel.Margin = New-Object System.Windows.Forms.Padding(0, 0, 8, 0)
+$flowActionsLeft.Controls.Add($btnCancel)
 
 $btnOpenReports = New-Object System.Windows.Forms.Button
 $btnOpenReports.Text = "Open Reports"
 $btnOpenReports.Font = $fonts.Body
-$btnOpenReports.Location = New-Object System.Drawing.Point(510, 2)
 $btnOpenReports.Size = New-Object System.Drawing.Size(115, 32)
 $btnOpenReports.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
 $btnOpenReports.BackColor = $theme.BtnSecondaryBg
 $btnOpenReports.ForeColor = $theme.BtnSecondaryFg
-$pnlActions.Controls.Add($btnOpenReports)
+$btnOpenReports.Margin = New-Object System.Windows.Forms.Padding(0, 0, 8, 0)
+$flowActionsLeft.Controls.Add($btnOpenReports)
+$tblActions.Controls.Add($flowActionsLeft, 0, 0)
 
-$btnClearLog = New-Object System.Windows.Forms.Button
-$btnClearLog.Text = "Clear"
-$btnClearLog.Font = $fonts.Small
-$btnClearLog.Location = New-Object System.Drawing.Point(740, 2)
-$btnClearLog.Size = New-Object System.Drawing.Size(70, 32)
-$btnClearLog.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
-$btnClearLog.BackColor = $theme.BtnSecondaryBg
-$btnClearLog.ForeColor = $theme.BtnSecondaryFg
-$pnlActions.Controls.Add($btnClearLog)
+# Right utilities (Clear, Copy)
+$flowActionsRight = New-Object System.Windows.Forms.FlowLayoutPanel
+$flowActionsRight.Dock = 'Fill'
+$flowActionsRight.Margin = New-Object System.Windows.Forms.Padding(0)
+$flowActionsRight.FlowDirection = 'RightToLeft'
 
 $btnCopyLog = New-Object System.Windows.Forms.Button
 $btnCopyLog.Text = "Copy"
 $btnCopyLog.Font = $fonts.Small
-$btnCopyLog.Location = New-Object System.Drawing.Point(820, 2)
 $btnCopyLog.Size = New-Object System.Drawing.Size(75, 32)
 $btnCopyLog.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
 $btnCopyLog.BackColor = $theme.BtnSecondaryBg
 $btnCopyLog.ForeColor = $theme.BtnSecondaryFg
-$pnlActions.Controls.Add($btnCopyLog)
+$btnCopyLog.Margin = New-Object System.Windows.Forms.Padding(0)
+$flowActionsRight.Controls.Add($btnCopyLog)
 
-# Activity & Diagnostics Header
+$btnClearLog = New-Object System.Windows.Forms.Button
+$btnClearLog.Text = "Clear"
+$btnClearLog.Font = $fonts.Small
+$btnClearLog.Size = New-Object System.Drawing.Size(70, 32)
+$btnClearLog.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+$btnClearLog.BackColor = $theme.BtnSecondaryBg
+$btnClearLog.ForeColor = $theme.BtnSecondaryFg
+$btnClearLog.Margin = New-Object System.Windows.Forms.Padding(0, 0, 8, 0)
+$flowActionsRight.Controls.Add($btnClearLog)
+$tblActions.Controls.Add($flowActionsRight, 1, 0)
+$tabStudio.Controls.Add($tblActions, 0, 4)
+
+# ---------------- Row 5: Activity Header + Progress Bar ----------------
+$pnlActContainer = New-Object System.Windows.Forms.TableLayoutPanel
+$pnlActContainer.Dock = 'Fill'
+$pnlActContainer.AutoSize = $true
+$pnlActContainer.ColumnCount = 2
+$pnlActContainer.RowCount = 2
+$pnlActContainer.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 4)
+[void]$pnlActContainer.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+[void]$pnlActContainer.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::AutoSize)))
+[void]$pnlActContainer.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
+[void]$pnlActContainer.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 6)))
+
+$flowActLeft = New-Object System.Windows.Forms.FlowLayoutPanel
+$flowActLeft.Dock = 'Fill'
+$flowActLeft.AutoSize = $true
+$flowActLeft.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 2)
+
 $lblActHdr = New-Object System.Windows.Forms.Label
 $lblActHdr.Text = "Activity & Diagnostics"
 $lblActHdr.UseMnemonic = $false
 $lblActHdr.Font = $fonts.SectionHdr
 $lblActHdr.ForeColor = $theme.TextPrimary
-$lblActHdr.Location = New-Object System.Drawing.Point(24, 376)
 $lblActHdr.AutoSize = $true
-$tabStudio.Controls.Add($lblActHdr)
+$lblActHdr.Margin = New-Object System.Windows.Forms.Padding(0, 0, 16, 0)
+$flowActLeft.Controls.Add($lblActHdr)
 
 $lblStatus = New-Object System.Windows.Forms.Label
 $lblStatus.Text = "Status: Idle - configure inputs and choose Preview Plan or Start Build"
 $lblStatus.Font = $fonts.Small
 $lblStatus.ForeColor = $theme.TextSecondary
-$lblStatus.Location = New-Object System.Drawing.Point(200, 379)
 $lblStatus.AutoSize = $true
-$tabStudio.Controls.Add($lblStatus)
+$lblStatus.Margin = New-Object System.Windows.Forms.Padding(0, 2, 0, 0)
+$flowActLeft.Controls.Add($lblStatus)
+$pnlActContainer.Controls.Add($flowActLeft, 0, 0)
 
 $lblElapsed = New-Object System.Windows.Forms.Label
 $lblElapsed.Text = "Elapsed: 00:00"
 $lblElapsed.Font = $fonts.Small
 $lblElapsed.ForeColor = $theme.TextSecondary
-$lblElapsed.Location = New-Object System.Drawing.Point(820, 379)
 $lblElapsed.AutoSize = $true
-$tabStudio.Controls.Add($lblElapsed)
+$lblElapsed.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
+$lblElapsed.Margin = New-Object System.Windows.Forms.Padding(0, 2, 0, 0)
+$pnlActContainer.Controls.Add($lblElapsed, 1, 0)
 
-# Progress Bar (Slim, 4px)
 $progressBar = New-Object System.Windows.Forms.ProgressBar
-$progressBar.Location = New-Object System.Drawing.Point(24, 402)
-$progressBar.Size = New-Object System.Drawing.Size(896, 4)
-$tabStudio.Controls.Add($progressBar)
+$progressBar.Dock = 'Fill'
+$progressBar.Height = 4
+$progressBar.Margin = New-Object System.Windows.Forms.Padding(0)
+$pnlActContainer.SetColumnSpan($progressBar, 2)
+$pnlActContainer.Controls.Add($progressBar, 0, 1)
+$tabStudio.Controls.Add($pnlActContainer, 0, 5)
 
-# Console TextBox (Clean, quiet dark terminal with subtle 1px border)
+# ---------------- Row 6: Terminal Console (Fills ALL remaining space!) ----------------
 $txtLog = New-Object System.Windows.Forms.TextBox
 $txtLog.Multiline = $true
 $txtLog.ReadOnly = $true
@@ -552,137 +712,177 @@ $txtLog.ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
 $txtLog.Font = $fonts.Console
 $txtLog.BackColor = $theme.TerminalBg
 $txtLog.ForeColor = $theme.TerminalFg
-$txtLog.Location = New-Object System.Drawing.Point(24, 412)
-$txtLog.Size = New-Object System.Drawing.Size(896, 310)
+$txtLog.Dock = 'Fill'
 $txtLog.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
-$tabStudio.Controls.Add($txtLog)
+$txtLog.Margin = New-Object System.Windows.Forms.Padding(0)
+$tabStudio.Controls.Add($txtLog, 0, 6)
 
 # ===========================================================================
-# TAB 2: MODULE & PROFILE INSPECTOR
+# TAB 2: MODULE & PROFILE INSPECTOR (Automatic Layout via TableLayoutPanel)
 # ===========================================================================
+$pnlModHdr = New-Object System.Windows.Forms.FlowLayoutPanel
+$pnlModHdr.Dock = 'Fill'
+$pnlModHdr.FlowDirection = 'TopDown'
+$pnlModHdr.AutoSize = $true
+$pnlModHdr.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 8)
+
 $lblModTitle = New-Object System.Windows.Forms.Label
 $lblModTitle.Text = "Module Catalog & Architecture"
 $lblModTitle.UseMnemonic = $false
 $lblModTitle.Font = $fonts.SectionHdr
 $lblModTitle.ForeColor = $theme.TextPrimary
-$lblModTitle.Location = New-Object System.Drawing.Point(24, 16)
 $lblModTitle.AutoSize = $true
-$tabModules.Controls.Add($lblModTitle)
+$lblModTitle.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 2)
+$pnlModHdr.Controls.Add($lblModTitle)
 
 $lblModHelp = New-Object System.Windows.Forms.Label
 $lblModHelp.Text = "Inspect all 19 offline servicing modules, risk levels, reversibility tiers, and execution tradeoffs."
 $lblModHelp.Font = $fonts.Small
 $lblModHelp.ForeColor = $theme.TextSecondary
-$lblModHelp.Location = New-Object System.Drawing.Point(25, 40)
 $lblModHelp.AutoSize = $true
-$tabModules.Controls.Add($lblModHelp)
+$pnlModHdr.Controls.Add($lblModHelp)
+$tabModules.Controls.Add($pnlModHdr, 0, 0)
 
 $listModules = New-Object System.Windows.Forms.ListView
-$listModules.Location = New-Object System.Drawing.Point(24, 66)
-$listModules.Size = New-Object System.Drawing.Size(896, 440)
+$listModules.Dock = 'Fill'
 $listModules.View = [System.Windows.Forms.View]::Details
 $listModules.FullRowSelect = $true
 $listModules.GridLines = $true
 $listModules.Font = $fonts.Body
+$listModules.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
+$listModules.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 8)
 [void]$listModules.Columns.Add("Status", 75)
 [void]$listModules.Columns.Add("Module ID", 190)
 [void]$listModules.Columns.Add("Risk", 80)
 [void]$listModules.Columns.Add("Reversibility", 110)
 [void]$listModules.Columns.Add("Scope", 85)
 [void]$listModules.Columns.Add("Description & Trade-offs", 340)
-$tabModules.Controls.Add($listModules)
+
+# Responsive column stretching for Description
+$listModules.Add_Resize({
+    param($s, $e)
+    $fixedWidth = 75 + 190 + 80 + 110 + 85 + 25
+    $remainder = $listModules.ClientSize.Width - $fixedWidth
+    if ($remainder -gt 320) {
+        $listModules.Columns[5].Width = $remainder
+    }
+})
+$tabModules.Controls.Add($listModules, 0, 1)
 
 $lblModDetailTitle = New-Object System.Windows.Forms.Label
 $lblModDetailTitle.Text = "Selected Module Details & Trade-offs:"
 $lblModDetailTitle.UseMnemonic = $false
 $lblModDetailTitle.Font = $fonts.SubHdr
 $lblModDetailTitle.ForeColor = $theme.TextPrimary
-$lblModDetailTitle.Location = New-Object System.Drawing.Point(24, 516)
 $lblModDetailTitle.AutoSize = $true
-$tabModules.Controls.Add($lblModDetailTitle)
+$lblModDetailTitle.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 4)
+$tabModules.Controls.Add($lblModDetailTitle, 0, 2)
 
 $txtModDetail = New-Object System.Windows.Forms.TextBox
 $txtModDetail.Font = $fonts.Body
 $txtModDetail.Multiline = $true
 $txtModDetail.ReadOnly = $true
 $txtModDetail.ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
-$txtModDetail.Location = New-Object System.Drawing.Point(24, 540)
-$txtModDetail.Size = New-Object System.Drawing.Size(896, 150)
+$txtModDetail.Dock = 'Fill'
 $txtModDetail.BackColor = $theme.BgSurface
 $txtModDetail.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
-$tabModules.Controls.Add($txtModDetail)
+$txtModDetail.Margin = New-Object System.Windows.Forms.Padding(0)
+$tabModules.Controls.Add($txtModDetail, 0, 3)
 
 # ===========================================================================
-# TAB 3: BUILD ARTIFACTS & REPORTS
+# TAB 3: BUILD ARTIFACTS & REPORTS (Automatic Layout via TableLayoutPanel)
 # ===========================================================================
+$pnlRepHdr = New-Object System.Windows.Forms.FlowLayoutPanel
+$pnlRepHdr.Dock = 'Fill'
+$pnlRepHdr.FlowDirection = 'TopDown'
+$pnlRepHdr.AutoSize = $true
+$pnlRepHdr.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 6)
+
 $lblRepTitle = New-Object System.Windows.Forms.Label
 $lblRepTitle.Text = "Build Artifacts & Generated Reports"
 $lblRepTitle.UseMnemonic = $false
 $lblRepTitle.Font = $fonts.SectionHdr
 $lblRepTitle.ForeColor = $theme.TextPrimary
-$lblRepTitle.Location = New-Object System.Drawing.Point(24, 16)
 $lblRepTitle.AutoSize = $true
-$tabReports.Controls.Add($lblRepTitle)
+$lblRepTitle.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 2)
+$pnlRepHdr.Controls.Add($lblRepTitle)
 
 $lblRepHelp = New-Object System.Windows.Forms.Label
 $lblRepHelp.Text = "Review manifests, verification reports, and logs generated in the staging directory."
 $lblRepHelp.Font = $fonts.Small
 $lblRepHelp.ForeColor = $theme.TextSecondary
-$lblRepHelp.Location = New-Object System.Drawing.Point(25, 40)
 $lblRepHelp.AutoSize = $true
-$tabReports.Controls.Add($lblRepHelp)
+$pnlRepHdr.Controls.Add($lblRepHelp)
+$tabReports.Controls.Add($pnlRepHdr, 0, 0)
+
+$flowRepButtons = New-Object System.Windows.Forms.FlowLayoutPanel
+$flowRepButtons.Dock = 'Fill'
+$flowRepButtons.AutoSize = $true
+$flowRepButtons.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 8)
 
 $btnRefreshReports = New-Object System.Windows.Forms.Button
 $btnRefreshReports.Text = "Refresh Artifacts"
 $btnRefreshReports.Font = $fonts.Body
-$btnRefreshReports.Location = New-Object System.Drawing.Point(24, 66)
 $btnRefreshReports.Size = New-Object System.Drawing.Size(130, 30)
 $btnRefreshReports.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
 $btnRefreshReports.BackColor = $theme.BtnSecondaryBg
 $btnRefreshReports.ForeColor = $theme.BtnSecondaryFg
-$tabReports.Controls.Add($btnRefreshReports)
+$btnRefreshReports.Margin = New-Object System.Windows.Forms.Padding(0, 0, 8, 0)
+$flowRepButtons.Controls.Add($btnRefreshReports)
 
 $btnOpenReportsDir = New-Object System.Windows.Forms.Button
 $btnOpenReportsDir.Text = "Open in Explorer"
 $btnOpenReportsDir.Font = $fonts.Body
-$btnOpenReportsDir.Location = New-Object System.Drawing.Point(162, 66)
 $btnOpenReportsDir.Size = New-Object System.Drawing.Size(130, 30)
 $btnOpenReportsDir.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
 $btnOpenReportsDir.BackColor = $theme.BtnSecondaryBg
 $btnOpenReportsDir.ForeColor = $theme.BtnSecondaryFg
-$tabReports.Controls.Add($btnOpenReportsDir)
+$btnOpenReportsDir.Margin = New-Object System.Windows.Forms.Padding(0)
+$flowRepButtons.Controls.Add($btnOpenReportsDir)
+$tabReports.Controls.Add($flowRepButtons, 0, 1)
 
 $listReports = New-Object System.Windows.Forms.ListView
-$listReports.Location = New-Object System.Drawing.Point(24, 106)
-$listReports.Size = New-Object System.Drawing.Size(896, 230)
+$listReports.Dock = 'Fill'
 $listReports.View = [System.Windows.Forms.View]::Details
 $listReports.FullRowSelect = $true
 $listReports.GridLines = $true
 $listReports.Font = $fonts.Body
+$listReports.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
+$listReports.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 8)
 [void]$listReports.Columns.Add("Artifact Name", 280)
 [void]$listReports.Columns.Add("Size", 100)
 [void]$listReports.Columns.Add("Last Modified", 180)
 [void]$listReports.Columns.Add("Type", 120)
-$tabReports.Controls.Add($listReports)
+
+# Responsive column stretching for Artifact Name
+$listReports.Add_Resize({
+    param($s, $e)
+    $fixedWidth = 100 + 180 + 120 + 25
+    $remainder = $listReports.ClientSize.Width - $fixedWidth
+    if ($remainder -gt 250) {
+        $listReports.Columns[0].Width = $remainder
+    }
+})
+$tabReports.Controls.Add($listReports, 0, 2)
 
 $lblPreviewTitle = New-Object System.Windows.Forms.Label
 $lblPreviewTitle.Text = "Artifact Content Preview:"
 $lblPreviewTitle.Font = $fonts.SubHdr
 $lblPreviewTitle.ForeColor = $theme.TextPrimary
-$lblPreviewTitle.Location = New-Object System.Drawing.Point(24, 348)
 $lblPreviewTitle.AutoSize = $true
-$tabReports.Controls.Add($lblPreviewTitle)
+$lblPreviewTitle.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 4)
+$tabReports.Controls.Add($lblPreviewTitle, 0, 3)
 
 $txtReportViewer = New-Object System.Windows.Forms.TextBox
 $txtReportViewer.Font = $fonts.Console
 $txtReportViewer.Multiline = $true
 $txtReportViewer.ReadOnly = $true
 $txtReportViewer.ScrollBars = [System.Windows.Forms.ScrollBars]::Both
-$txtReportViewer.Location = New-Object System.Drawing.Point(24, 372)
-$txtReportViewer.Size = New-Object System.Drawing.Size(896, 318)
+$txtReportViewer.Dock = 'Fill'
 $txtReportViewer.BackColor = $theme.BgSurface
 $txtReportViewer.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
-$tabReports.Controls.Add($txtReportViewer)
+$txtReportViewer.Margin = New-Object System.Windows.Forms.Padding(0)
+$tabReports.Controls.Add($txtReportViewer, 0, 4)
 
 # ---------------------------------------------------------------------------
 # Helper: Logging & Diagnostics Output
