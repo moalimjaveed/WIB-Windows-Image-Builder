@@ -35,6 +35,10 @@ TestResults/
 *_results.json
 smoke_results.json
 
+# .NET build artifacts
+[Bb]in/
+[Oo]bj/
+
 # Tools & Binaries
 oscdimg.exe
 

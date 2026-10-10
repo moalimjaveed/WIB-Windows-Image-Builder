@@ -12,11 +12,27 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$repoRoot = Split-Path -Parent $PSScriptRoot
+$studioExe = Join-Path $PSScriptRoot 'WibStudio\WibStudio.exe'
 $scriptPath = Join-Path $PSScriptRoot 'WibBuilderGui.ps1'
 
 # Check if current session is elevated
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
+# If modern WPF WibStudio is present and this isn't an automated script-screenshot request, launch WibStudio
+if ((Test-Path -LiteralPath $studioExe) -and -not $ScreenshotPath) {
+    $procParams = @{
+        FilePath = $studioExe
+        WorkingDirectory = $repoRoot
+    }
+    if (-not $isAdmin -and -not $NoElevate) {
+        $procParams['Verb'] = 'RunAs'
+    }
+    Start-Process @procParams
+    return
+}
+
+# Fallback to PowerShell WinForms engine
 if (-not $isAdmin -and -not $NoElevate) {
     # Launch elevated process with properly quoted file path for paths with spaces
     $elevateArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$scriptPath`"")

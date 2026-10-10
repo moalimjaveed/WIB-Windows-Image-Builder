@@ -49,6 +49,20 @@ if ($ExpectedIsoSha256) {
 }
 
 if ($Gui) {
+    $studioExe = Join-Path $toolRoot 'tools\WibStudio\WibStudio.exe'
+    if (Test-Path -LiteralPath $studioExe) {
+        $launchParams = @{
+            FilePath = $studioExe
+            WorkingDirectory = $toolRoot
+        }
+        $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+        if (-not $isAdmin -and -not $NoElevate) {
+            $launchParams['Verb'] = 'RunAs'
+        }
+        Start-Process @launchParams
+        return
+    }
+
     $builderGui = Join-Path $toolRoot 'tools\WibBuilderGui.ps1'
     if (Test-Path -LiteralPath $builderGui) {
         $guiSplat = @{}

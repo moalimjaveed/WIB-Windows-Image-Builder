@@ -1,0 +1,200 @@
+<UserControl x:Class="WibStudio.Views.ArtifactsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:models="clr-namespace:WibStudio.Models"
+             xmlns:vm="clr-namespace:WibStudio.ViewModels"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance vm:ArtifactsViewModel}"
+             d:DesignHeight="850" d:DesignWidth="1200">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- 0: Header & Top Actions -->
+            <RowDefinition Height="Auto" />
+            <!-- 1: Artifacts Table (Top 45%) -->
+            <RowDefinition Height="45*" />
+            <!-- 2: Splitter -->
+            <RowDefinition Height="8" />
+            <!-- 3: Split Previewer (Bottom 55%) -->
+            <RowDefinition Height="55*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header Card -->
+        <Border Grid.Row="0"
+                Style="{StaticResource WibCardStyle}"
+                Padding="16,12"
+                Margin="0,0,0,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Build Artifacts &amp; Generated Reports" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <TextBlock Text="Verified servicing manifests, execution logs, HTML integrity reports, and registry reversibility journals."
+                               FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+
+                <!-- Actions -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding NotificationMessage}"
+                               FontSize="12"
+                               Foreground="#38BDF8"
+                               VerticalAlignment="Center"
+                               Margin="0,0,16,0" />
+
+                    <ui:Button Content="Refresh Artifacts"
+                               Icon="{ui:SymbolIcon Symbol=ArrowClockwise24}"
+                               Command="{Binding RefreshArtifactsCommand}"
+                               Margin="0,0,8,0" />
+
+                    <ui:Button Content="Open in Explorer"
+                               Icon="{ui:SymbolIcon Symbol=FolderOpen24}"
+                               Command="{Binding OpenInExplorerCommand}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Artifacts Table (Top 45%) -->
+        <Border Grid.Row="1"
+                Style="{StaticResource WibCardStyle}"
+                Padding="0"
+                Margin="0,0,0,0">
+            <DataGrid ItemsSource="{Binding Artifacts}"
+                      SelectedItem="{Binding SelectedArtifact}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      IsReadOnly="True"
+                      SelectionMode="Single"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto"
+                      BorderThickness="0"
+                      Background="Transparent"
+                      RowHeaderWidth="0">
+                <DataGrid.Columns>
+                    <!-- File Name -->
+                    <DataGridTemplateColumn Header="Artifact Name" Width="260">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type models:BuildArtifact}">
+                                <StackPanel Orientation="Horizontal" Margin="8,4">
+                                    <ui:SymbolIcon Symbol="Document24" Foreground="{StaticResource WibPrimaryAccent}" Margin="0,0,8,0" />
+                                    <TextBlock Text="{Binding FileName}"
+                                               FontFamily="Cascadia Code, Consolas"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <!-- Type -->
+                    <DataGridTextColumn Header="Type" Binding="{Binding FileType}" Width="200" />
+
+                    <!-- Size -->
+                    <DataGridTextColumn Header="Size" Binding="{Binding SizeFormatted}" Width="100" />
+
+                    <!-- Last Modified -->
+                    <DataGridTextColumn Header="Last Modified" Binding="{Binding LastModifiedFormatted}" Width="180" />
+
+                    <!-- Status -->
+                    <DataGridTemplateColumn Header="Integrity Status" Width="140">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type models:BuildArtifact}">
+                                <Border Background="#1E3A2B" BorderBrush="#16A34A" BorderThickness="1" CornerRadius="10" Padding="8,2" HorizontalAlignment="Center">
+                                    <TextBlock Text="{Binding Status}" FontSize="11" FontWeight="SemiBold" Foreground="#4ADE80" />
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <!-- Full Path -->
+                    <DataGridTextColumn Header="File Path" Binding="{Binding FilePath}" Width="*" Foreground="#94A3B8" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!-- Grid Splitter -->
+        <GridSplitter Grid.Row="2"
+                      Height="4"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Center"
+                      Background="{DynamicResource CardStrokeColorDefaultBrush}"
+                      Cursor="SizeNS" />
+
+        <!-- Split Previewer (Bottom 55%) -->
+        <Border Grid.Row="3"
+                Background="{StaticResource WibTerminalBg}"
+                BorderBrush="{StaticResource WibTerminalBorder}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="14,10"
+                Margin="0,0,0,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <!-- Previewer Header Bar -->
+                    <RowDefinition Height="Auto" />
+                    <!-- Code Preview ScrollViewer -->
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Previewer Header -->
+                <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:SymbolIcon Symbol="Code24" Foreground="#38BDF8" Margin="0,0,8,0" />
+                        <TextBlock Text="{Binding SelectedArtifact.FileName, FallbackValue='No Artifact Selected'}"
+                                   FontFamily="Cascadia Code, Consolas"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                                   Margin="0,0,12,0"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding SelectedArtifact.FileType}"
+                                   FontSize="11"
+                                   Foreground="#94A3B8"
+                                   Margin="0,0,12,0"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding SelectedArtifact.SizeFormatted}"
+                                   FontSize="11"
+                                   Foreground="#64748B"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- Copy Preview Button -->
+                    <ui:Button Grid.Column="1"
+                               Content="Copy Preview"
+                               Icon="{ui:SymbolIcon Symbol=Copy24}"
+                               Command="{Binding CopyPreviewCommand}"
+                               Padding="10,4" />
+                </Grid>
+
+                <!-- Code / Text Preview -->
+                <ScrollViewer Grid.Row="1"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto">
+                    <TextBox Text="{Binding SelectedArtifact.ContentPreview, Mode=OneWay, FallbackValue='Select an artifact from the table above to preview its contents.'}"
+                             IsReadOnly="True"
+                             FontFamily="Cascadia Code, Consolas, Courier New"
+                             FontSize="12"
+                             Background="Transparent"
+                             Foreground="{StaticResource WibTerminalText}"
+                             BorderThickness="0"
+                             TextWrapping="NoWrap"
+                             AcceptsReturn="True" />
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

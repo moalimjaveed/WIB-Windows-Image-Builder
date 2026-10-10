@@ -103,7 +103,9 @@ WIB provides three distinct ways to run, depending on your preferred workflow:
 
 #### Option 1: Desktop GUI Studio (`launch-gui.cmd`) &mdash; *Easiest & Most Intuitive*
 
-No commands to type&mdash;everything is controlled through a modern desktop application:
+No commands to type&mdash;everything is controlled through an authentic **Windows 11 Fluent 2** desktop application with Mica material glass, rounded cards, real-time dark diagnostics console, and integrated module catalog:
+
+![WIB Studio Dashboard](docs/screenshots/01_wib_studio_dashboard.jpg)
 
 * **For Full Builds (Elevated Servicing Mode):**
   * Double-click **`launch-gui.cmd`** in the `C:\WIB` folder.

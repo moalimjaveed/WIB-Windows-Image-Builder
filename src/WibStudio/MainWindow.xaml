@@ -1,0 +1,303 @@
+<ui:FluentWindow x:Class="WibStudio.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:views="clr-namespace:WibStudio.Views"
+        xmlns:vm="clr-namespace:WibStudio.ViewModels"
+        mc:Ignorable="d"
+        Title="Windows Image Builder Studio"
+        Height="880" Width="1380"
+        MinHeight="720" MinWidth="1180"
+        WindowStartupLocation="CenterScreen"
+        WindowBackdropType="Mica"
+        ExtendsContentIntoTitleBar="True"
+        d:DataContext="{d:DesignInstance vm:MainViewModel}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- 0: Fluent TitleBar -->
+            <RowDefinition Height="Auto" />
+            <!-- 1: App Header & Privilege Pill Badge -->
+            <RowDefinition Height="Auto" />
+            <!-- 2: Navigation Bar (3 Tabs) -->
+            <RowDefinition Height="Auto" />
+            <!-- 3: Active Tab Content (Dynamic) -->
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 0: TitleBar -->
+        <ui:TitleBar Grid.Row="0"
+                     Title="Windows Image Builder Studio"
+                     Icon="{ui:SymbolIcon Symbol=Wrench24}" />
+
+        <!-- 1: App Header -->
+        <Border Grid.Row="1"
+                Padding="24,8,24,12"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: App Icon + App Name + Subtitle -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Modern Fluent App Icon Mark -->
+                    <Border Background="{StaticResource WibPrimaryAccent}"
+                            CornerRadius="8"
+                            Width="38" Height="38"
+                            Margin="0,0,14,0"
+                            VerticalAlignment="Center">
+                        <ui:SymbolIcon Symbol="Wrench24" Foreground="White" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Windows Image Builder Studio"
+                                       FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif"
+                                       FontSize="18"
+                                       FontWeight="Bold"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                                       VerticalAlignment="Center" />
+                            <Border Background="#1E293B" CornerRadius="4" Padding="6,1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="v1.0.0" FontSize="11" FontWeight="SemiBold" Foreground="#38BDF8" />
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Hardware-adaptive, verifiable Windows 11 offline servicing engine"
+                                   FontFamily="Segoe UI Variable Text, Segoe UI, sans-serif"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Right: Session Privilege Pill Badge & Theme Toggle -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Privilege Pill Badge -->
+                    <Border Margin="0,0,14,0"
+                            CornerRadius="14"
+                            Padding="12,5"
+                            BorderThickness="1">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsElevated}" Value="True">
+                                        <Setter Property="Background" Value="#1E3A2B" />
+                                        <Setter Property="BorderBrush" Value="#16A34A" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsElevated}" Value="False">
+                                        <Setter Property="Background" Value="#2E2214" />
+                                        <Setter Property="BorderBrush" Value="#D97706" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Margin="0,0,6,0">
+                                <ui:SymbolIcon.Style>
+                                    <Style TargetType="ui:SymbolIcon">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsElevated}" Value="True">
+                                                <Setter Property="Symbol" Value="ShieldCheckmark24" />
+                                                <Setter Property="Foreground" Value="#4ADE80" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsElevated}" Value="False">
+                                                <Setter Property="Symbol" Value="ShieldAlert24" />
+                                                <Setter Property="Foreground" Value="#F59E0B" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ui:SymbolIcon.Style>
+                            </ui:SymbolIcon>
+                            <TextBlock Text="{Binding PrivilegeText}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsElevated}" Value="True">
+                                                <Setter Property="Foreground" Value="#4ADE80" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsElevated}" Value="False">
+                                                <Setter Property="Foreground" Value="#F59E0B" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Theme Switcher Button -->
+                    <ui:Button Command="{Binding ToggleThemeCommand}"
+                               Appearance="Secondary"
+                               Padding="10,6"
+                               ToolTip="Toggle Windows 11 Light/Dark Theme">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="WeatherMoon24" Margin="0,0,6,0" />
+                            <TextBlock Text="{Binding IsDarkTheme, Converter={x:Null}}"
+                                       FontSize="12" />
+                        </StackPanel>
+                    </ui:Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 2: Navigation Bar (3 Tabs) -->
+        <Border Grid.Row="2"
+                Padding="24,10,24,10"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal">
+                <!-- Tab 1: Studio & Build -->
+                <RadioButton GroupName="NavTabs"
+                             IsChecked="True"
+                             Command="{Binding SelectTabCommand}"
+                             CommandParameter="0"
+                             Margin="0,0,10,0">
+                    <RadioButton.Template>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Border x:Name="TabBorder"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="16,8"
+                                    Cursor="Hand">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Wrench24" Margin="0,0,8,0" x:Name="TabIcon" />
+                                    <TextBlock Text="Studio &amp; Build" FontWeight="SemiBold" FontSize="13" x:Name="TabText" />
+                                </StackPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource SubtitleAltFillColorSecondaryBrush}" />
+                                    <Setter TargetName="TabBorder" Property="BorderBrush" Value="{StaticResource WibPrimaryAccent}" />
+                                    <Setter TargetName="TabText" Property="Foreground" Value="{StaticResource WibPrimaryAccent}" />
+                                    <Setter TargetName="TabIcon" Property="Foreground" Value="{StaticResource WibPrimaryAccent}" />
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </RadioButton.Template>
+                </RadioButton>
+
+                <!-- Tab 2: Module & Profile Inspector -->
+                <RadioButton GroupName="NavTabs"
+                             Command="{Binding SelectTabCommand}"
+                             CommandParameter="1"
+                             Margin="0,0,10,0">
+                    <RadioButton.Template>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Border x:Name="TabBorder"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="16,8"
+                                    Cursor="Hand">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="DeveloperBoard24" Margin="0,0,8,0" x:Name="TabIcon" />
+                                    <TextBlock Text="Module &amp; Profile Inspector" FontWeight="SemiBold" FontSize="13" x:Name="TabText" />
+                                </StackPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource SubtitleAltFillColorSecondaryBrush}" />
+                                    <Setter TargetName="TabBorder" Property="BorderBrush" Value="{StaticResource WibPrimaryAccent}" />
+                                    <Setter TargetName="TabText" Property="Foreground" Value="{StaticResource WibPrimaryAccent}" />
+                                    <Setter TargetName="TabIcon" Property="Foreground" Value="{StaticResource WibPrimaryAccent}" />
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </RadioButton.Template>
+                </RadioButton>
+
+                <!-- Tab 3: Build Artifacts & Reports -->
+                <RadioButton GroupName="NavTabs"
+                             Command="{Binding SelectTabCommand}"
+                             CommandParameter="2">
+                    <RadioButton.Template>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Border x:Name="TabBorder"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="16,8"
+                                    Cursor="Hand">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="DocumentBulletList24" Margin="0,0,8,0" x:Name="TabIcon" />
+                                    <TextBlock Text="Build Artifacts &amp; Reports" FontWeight="SemiBold" FontSize="13" x:Name="TabText" />
+                                </StackPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource SubtitleAltFillColorSecondaryBrush}" />
+                                    <Setter TargetName="TabBorder" Property="BorderBrush" Value="{StaticResource WibPrimaryAccent}" />
+                                    <Setter TargetName="TabText" Property="Foreground" Value="{StaticResource WibPrimaryAccent}" />
+                                    <Setter TargetName="TabIcon" Property="Foreground" Value="{StaticResource WibPrimaryAccent}" />
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </RadioButton.Template>
+                </RadioButton>
+            </StackPanel>
+        </Border>
+
+        <!-- 3: Active Tab Content -->
+        <Grid Grid.Row="3" Margin="24,14,24,14">
+            <!-- Screen 1: Studio & Build View -->
+            <views:StudioBuildView DataContext="{Binding StudioBuildVm}">
+                <views:StudioBuildView.Style>
+                    <Style TargetType="views:StudioBuildView">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedTabIndex}" Value="0">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </views:StudioBuildView.Style>
+            </views:StudioBuildView>
+
+            <!-- Screen 2: Module & Profile Inspector View -->
+            <views:ModuleInspectorView DataContext="{Binding ModuleInspectorVm}">
+                <views:ModuleInspectorView.Style>
+                    <Style TargetType="views:ModuleInspectorView">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedTabIndex}" Value="1">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </views:ModuleInspectorView.Style>
+            </views:ModuleInspectorView>
+
+            <!-- Screen 3: Build Artifacts & Reports View -->
+            <views:ArtifactsView DataContext="{Binding ArtifactsVm}">
+                <views:ArtifactsView.Style>
+                    <Style TargetType="views:ArtifactsView">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedTabIndex}" Value="2">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </views:ArtifactsView.Style>
+            </views:ArtifactsView>
+        </Grid>
+    </Grid>
+</ui:FluentWindow>

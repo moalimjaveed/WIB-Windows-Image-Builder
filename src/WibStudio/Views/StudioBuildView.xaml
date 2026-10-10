@@ -1,0 +1,350 @@
+<UserControl x:Class="WibStudio.Views.StudioBuildView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:models="clr-namespace:WibStudio.Models"
+             xmlns:vm="clr-namespace:WibStudio.ViewModels"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance vm:StudioBuildViewModel}"
+             d:DesignHeight="800" d:DesignWidth="1200">
+
+    <Grid Margin="0,0,0,0">
+        <Grid.RowDefinitions>
+            <!-- 0: Preflight Summary Bar -->
+            <RowDefinition Height="Auto" />
+            <!-- 1: Configuration Inputs & Toggles Card -->
+            <RowDefinition Height="Auto" />
+            <!-- 2: Action Buttons Bar -->
+            <RowDefinition Height="Auto" />
+            <!-- 3: Activity & Diagnostics Console (Consumes remaining space) -->
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- A. Preflight Summary Bar -->
+        <Border Grid.Row="0"
+                Style="{StaticResource WibCardStyle}"
+                Padding="16,10"
+                Margin="0,0,0,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Privilege Badge -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,24,0">
+                    <ui:SymbolIcon Symbol="ShieldCheckmark24" Foreground="{StaticResource WibPrimaryAccent}" Margin="0,0,8,0" />
+                    <Border Background="#24382A" CornerRadius="12" Padding="10,3" BorderBrush="#16A34A" BorderThickness="1">
+                        <TextBlock Text="{Binding PreflightPrivilege}" FontSize="12" FontWeight="SemiBold" Foreground="#4ADE80" />
+                    </Border>
+                </StackPanel>
+
+                <!-- Source ISO -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                    <ui:SymbolIcon Symbol="Disc24" Foreground="#94A3B8" Margin="0,0,8,0" />
+                    <StackPanel>
+                        <TextBlock Text="Source ISO" FontSize="11" Foreground="#94A3B8" />
+                        <TextBlock Text="{Binding PreflightIsoSummary}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" TextTrimming="CharacterEllipsis" MaxWidth="260" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Staging Workspace -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                    <ui:SymbolIcon Symbol="HardDrive24" Foreground="#94A3B8" Margin="0,0,8,0" />
+                    <StackPanel>
+                        <TextBlock Text="Staging Disk Quota" FontSize="11" Foreground="#94A3B8" />
+                        <TextBlock Text="{Binding PreflightWorkspaceSummary}" FontSize="12" FontWeight="SemiBold" Foreground="{Binding IsLowDiskSpace, Converter={StaticResource LowDiskToBrushConverter}}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Active Profile -->
+                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                    <ui:SymbolIcon Symbol="Wrench24" Foreground="#94A3B8" Margin="0,0,8,0" />
+                    <StackPanel>
+                        <TextBlock Text="Active Servicing Profile" FontSize="11" Foreground="#94A3B8" />
+                        <TextBlock Text="{Binding ActiveProfileSummary}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" TextTrimming="CharacterEllipsis" MaxWidth="300" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- B. Configuration Inputs & C. Options Toggles Card -->
+        <Border Grid.Row="1"
+                Style="{StaticResource WibCardStyle}"
+                Padding="16,14"
+                Margin="0,0,0,10"
+                IsEnabled="{Binding IsNotBusy}">
+            <StackPanel>
+                <!-- Source Paths Row -->
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Source ISO -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Source Windows 11 ISO Image" Style="{StaticResource WibFieldLabelStyle}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBox Grid.Column="0"
+                                        Text="{Binding IsoPath, UpdateSourceTrigger=PropertyChanged}"
+                                        PlaceholderText="e.g. C:\ISOs\Win11_24H2_English_x64.iso"
+                                        Margin="0,0,8,0" />
+                            <ui:Button Grid.Column="1"
+                                       Content="Browse..."
+                                       Icon="{ui:SymbolIcon Symbol=FolderOpen24}"
+                                       Command="{Binding BrowseIsoCommand}" />
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Staging Workspace -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Staging Workspace Directory (DISM Mount Sandbox)" Style="{StaticResource WibFieldLabelStyle}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBox Grid.Column="0"
+                                        Text="{Binding WorkspacePath, UpdateSourceTrigger=PropertyChanged}"
+                                        PlaceholderText="e.g. C:\WIB\work"
+                                        Margin="0,0,8,0" />
+                            <ui:Button Grid.Column="1"
+                                       Content="Browse..."
+                                       Icon="{ui:SymbolIcon Symbol=FolderOpen24}"
+                                       Command="{Binding BrowseWorkspaceCommand}" />
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Three Core Selectors (3 Equal Columns) -->
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 1. Build Profile -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="1. Build Servicing Profile" Style="{StaticResource WibFieldLabelStyle}" />
+                        <ComboBox ItemsSource="{Binding Profiles}"
+                                  SelectedItem="{Binding SelectedProfile}"
+                                  DisplayMemberPath="DisplayName"
+                                  HorizontalAlignment="Stretch"
+                                  Margin="0,0,0,4" />
+                        <TextBlock Text="{Binding ProfileHelperText}"
+                                   FontSize="11"
+                                   Foreground="{StaticResource WibPrimaryAccent}"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+
+                    <!-- 2. Target Edition -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="2. Target Edition" Style="{StaticResource WibFieldLabelStyle}" />
+                        <ComboBox ItemsSource="{Binding Editions}"
+                                  SelectedItem="{Binding SelectedEdition}"
+                                  DisplayMemberPath="DisplayName"
+                                  HorizontalAlignment="Stretch"
+                                  Margin="0,0,0,4" />
+                        <TextBlock Text="{Binding SelectedEdition.Description}"
+                                   FontSize="11"
+                                   Foreground="#94A3B8"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+
+                    <!-- 3. Hardware Profile -->
+                    <StackPanel Grid.Column="4">
+                        <TextBlock Text="3. Hardware Spec Profile" Style="{StaticResource WibFieldLabelStyle}" />
+                        <ComboBox ItemsSource="{Binding HardwareSpecs}"
+                                  SelectedItem="{Binding SelectedHardware}"
+                                  DisplayMemberPath="Name"
+                                  HorizontalAlignment="Stretch"
+                                  Margin="0,0,0,4" />
+                        <TextBlock Text="{Binding SelectedHardware.OptimizationsSummary}"
+                                   FontSize="11"
+                                   Foreground="#94A3B8"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Options & Safety Toggles -->
+                <Border BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Padding="0,10,0,0">
+                    <WrapPanel Orientation="Horizontal">
+                        <ui:ToggleSwitch Content="Dry-run simulation only"
+                                         IsChecked="{Binding IsDryRun}"
+                                         Margin="0,0,24,6" />
+                        <ui:ToggleSwitch Content="Resume from checkpoint"
+                                         IsChecked="{Binding ResumeFromCheckpoint}"
+                                         Margin="0,0,24,6" />
+                        <ui:ToggleSwitch Content="Download signed oscdimg"
+                                         IsChecked="{Binding DownloadSignedOscdimg}"
+                                         Margin="0,0,24,6" />
+                        <ui:ToggleSwitch Content="Accept high-risk modules"
+                                         IsChecked="{Binding AcceptHighRiskModules}"
+                                         Margin="0,0,24,6" />
+                        <ui:ToggleSwitch Content="Skip ISO hash verification"
+                                         IsChecked="{Binding SkipIsoHashVerification}"
+                                         Margin="0,0,24,6" />
+                    </WrapPanel>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <!-- D. Action Buttons Bar -->
+        <Border Grid.Row="2" Margin="0,0,0,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Left Action Cluster -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <!-- Preview Plan -->
+                    <ui:Button Content="Preview Plan"
+                               Icon="{ui:SymbolIcon Symbol=DocumentSearch24}"
+                               Command="{Binding PreviewPlanCommand}"
+                               Margin="0,0,10,0"
+                               Padding="14,8" />
+
+                    <!-- Start Build (Accent) -->
+                    <ui:Button Content="Start Build"
+                               Icon="{ui:SymbolIcon Symbol=Play24}"
+                               Appearance="Primary"
+                               Command="{Binding StartBuildCommand}"
+                               Margin="0,0,10,0"
+                               Padding="18,8" />
+
+                    <!-- Validate Profile -->
+                    <ui:Button Content="Validate Profile"
+                               Icon="{ui:SymbolIcon Symbol=CheckmarkCircle24}"
+                               Command="{Binding ValidateProfileCommand}"
+                               Margin="0,0,10,0"
+                               Padding="12,8" />
+
+                    <!-- Cancel (Danger) -->
+                    <ui:Button Content="Cancel"
+                               Icon="{ui:SymbolIcon Symbol=Stop24}"
+                               Appearance="Danger"
+                               Command="{Binding CancelCommand}"
+                               Margin="0,0,10,0"
+                               Padding="12,8" />
+
+                    <!-- Open Reports -->
+                    <ui:Button Content="Open Reports"
+                               Icon="{ui:SymbolIcon Symbol=Folder24}"
+                               Command="{Binding OpenReportsCommand}"
+                               Padding="12,8" />
+                </StackPanel>
+
+                <!-- Right Utility Cluster -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <ui:Button Content="Copy"
+                               Icon="{ui:SymbolIcon Symbol=Copy24}"
+                               Command="{Binding CopyConsoleCommand}"
+                               Margin="0,0,8,0"
+                               Padding="12,8" />
+                    <ui:Button Content="Clear"
+                               Icon="{ui:SymbolIcon Symbol=Delete24}"
+                               Command="{Binding ClearConsoleCommand}"
+                               Padding="12,8" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- E. Activity & Diagnostics Console (Takes 100% remaining space) -->
+        <Border Grid.Row="3"
+                Background="{StaticResource WibTerminalBg}"
+                BorderBrush="{StaticResource WibTerminalBorder}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="14,10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <!-- Status Row -->
+                    <RowDefinition Height="Auto" />
+                    <!-- Progress Bar -->
+                    <RowDefinition Height="Auto" />
+                    <!-- Terminal Console Stream -->
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Status Row -->
+                <Grid Grid.Row="0" Margin="0,0,0,6">
+                    <TextBlock Text="{Binding StatusText}"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding ElapsedTimeText}"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="#38BDF8"
+                               HorizontalAlignment="Right"
+                               VerticalAlignment="Center" />
+                </Grid>
+
+                <!-- Thin 4px Modern Progress Indicator -->
+                <ProgressBar Grid.Row="1"
+                             Value="{Binding ProgressValue}"
+                             Maximum="100"
+                             Height="4"
+                             Margin="0,0,0,10" />
+
+                <!-- Terminal View -->
+                <ScrollViewer Grid.Row="2"
+                              x:Name="ConsoleScrollViewer"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding LogEntries}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type models:LogEntry}">
+                                <Grid Margin="0,1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <!-- Timestamp -->
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding TimestampFormatted}"
+                                               FontFamily="Cascadia Code, Consolas, Courier New"
+                                               FontSize="11.5"
+                                               Foreground="#64748B"
+                                               Margin="0,0,8,0" />
+                                    <!-- Level Prefix -->
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding LevelPrefix}"
+                                               FontFamily="Cascadia Code, Consolas, Courier New"
+                                               FontSize="11.5"
+                                               FontWeight="SemiBold"
+                                               Foreground="{Binding Level, Converter={StaticResource LogLevelToBrushConverter}}"
+                                               Margin="0,0,8,0" />
+                                    <!-- Message Text -->
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding Message}"
+                                               FontFamily="Cascadia Code, Consolas, Courier New"
+                                               FontSize="11.5"
+                                               Foreground="{StaticResource WibTerminalText}"
+                                               TextWrapping="Wrap" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
