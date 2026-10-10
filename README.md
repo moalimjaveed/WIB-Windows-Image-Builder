@@ -53,56 +53,90 @@ For full compatibility details, see [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY
 
 ## How to Use WIB: Beginner's Step-by-Step Guide
 
-Whether you prefer a graphical desktop app, an interactive menu, or automated PowerShell commands, WIB makes creating clean Windows installation media simple and transparent.
+Whether you prefer a modern graphical desktop app, an interactive terminal menu, or automated PowerShell commands, WIB makes creating clean Windows installation media simple, safe, and transparent.
 
-### Step 1: Download and Extract WIB
+---
+
+### Quick Start: 3 Minutes to Your First Custom ISO
+
+If you are new to image building, here is the fastest way to get started:
+
+1. **Download & Extract WIB:** Download the project ZIP from GitHub and extract it to `C:\WIB`.
+2. **Download Windows 11:** Get the official Windows 11 multi-edition ISO directly from [Microsoft](https://www.microsoft.com/software-download/windows11).
+3. **Launch WIB Studio:** Double-click **`launch-gui.cmd`** in your `C:\WIB` folder (click **Yes** when Windows asks for Administrator permission).
+4. **Select Your ISO & Profile:**
+   * Click **Browse...** on *Source ISO Image* and pick your downloaded Windows 11 ISO.
+   * Ensure *Build Profile* is set to **`balanced`** (the gold standard for daily PCs).
+5. **Build:** Click **Preview Plan** to review what will change, then click **Start Build**!
+
+When the build finishes, your optimized, bloat-free ISO is ready in your `C:\WIB` folder.
+
+---
+
+### Detailed Step-by-Step Guide
+
+#### Step 1: Download and Extract WIB
 
 1. **Option A (GitHub ZIP Download):**
-   * Download the repository ZIP file from GitHub.
-   * Extract the files to a fast local drive (for example, `C:\WIB`).
-   * *Avoid deeply nested folders, OneDrive-synced paths, or network shares.*
+   * Download the repository ZIP file from the green **Code** button on GitHub.
+   * Extract the ZIP archive into a fast local drive, such as `C:\WIB`.
+   * *Tip:* Avoid extracting to OneDrive-synced folders, network drives, or folders with special symbols to ensure maximum DISM file-system performance.
 2. **Option B (Git Clone):**
    ```powershell
    git clone https://github.com/moalimjaveed/WIB-Windows-Image-Builder.git C:\WIB
    cd C:\WIB
    ```
 
-### Step 2: Download the Official Windows 11 ISO
+#### Step 2: Download the Official Windows 11 ISO
 
-1. **Get Clean Installation Media Directly from Microsoft:**
-   * Visit the official Microsoft download portal: [Download Windows 11](https://www.microsoft.com/software-download/windows11).
-   * Download the multi-edition ISO for **Windows 11 (26H2 latest & recommended)** or 24H2.
-2. **Place the ISO File on Your Computer:**
-   * Save the file in a convenient folder, such as:
-     * `C:\ISOs\Win11_26H2_English_x64.iso`
-     * (or place it directly inside your `C:\WIB` folder).
+Always use legitimate installation media obtained directly from Microsoft:
+
+1. Visit Microsoft's official download page: [Download Windows 11](https://www.microsoft.com/software-download/windows11).
+2. Under **Download Windows 11 Disk Image (ISO)**, select **Windows 11 (multi-edition ISO)** and download your preferred language.
+3. Save the file to your computer (for example, `C:\ISOs\Win11_English_x64.iso` or directly into `C:\WIB`).
 
 ---
 
 ### Step 3: Choose How to Launch WIB (3 Easy Ways)
 
-Choose the method that works best for you:
+WIB provides three distinct ways to run, depending on your preferred workflow:
 
-#### Option 1: Desktop GUI Studio (`launch-gui.cmd`) -- *Easiest for Beginners*
+#### Option 1: Desktop GUI Studio (`launch-gui.cmd`) &mdash; *Easiest & Most Intuitive*
 
-No command typing required!
+No commands to type&mdash;everything is controlled through a modern desktop application:
 
-1. Open your `C:\WIB` folder in File Explorer.
-2. Double-click **`launch-gui.cmd`** (or run `.\build.ps1 -Gui` in PowerShell).
-3. If prompted by Windows User Account Control (UAC), click **Yes** to allow Administrator servicing.
-4. In the **WIB Builder Studio** window:
-   * **Source Windows ISO:** Click **Browse...** and select your downloaded Windows 11 ISO file.
-   * **Custom Output ISO:** Choose where to save your customized ISO (e.g., `C:\ISOs\Win11_Custom_Balanced.iso`).
-   * **Optimization Profile:** Select **`balanced`** (recommended for workstations & daily use) or **`lean`** (maximum speed for VMs & gaming).
-   * **Target Edition:** Select your Windows edition (e.g., *Windows 11 Pro*) or leave as *Auto-detect*.
-   * **Hardware Profile:** Keep on *Live Host (CIM Auto-Detect)* or choose a specific hardware spec.
-   * **Unattended Setup:** Check options to bypass TPM/RAM requirements or configure an offline local user account.
-5. Click **Preview Plan** to review all scheduled changes, then click **Start Build**!
+* **For Full Builds (Elevated Servicing Mode):**
+  * Double-click **`launch-gui.cmd`** in the `C:\WIB` folder.
+  * Windows will ask for Administrator permission (UAC). Click **Yes**.
+* **For Safe Previews (No Admin Prompt Needed):**
+  * If you just want to look around, inspect profiles, or test features without elevating:
+  * Open PowerShell and run:
+    ```powershell
+    .\tools\launch-gui.ps1 -NoElevate
+    ```
+    *(or `.\build.ps1 -Gui -NoElevate`)*
 
-#### Option 2: Interactive Menu Launcher (`build.cmd`) -- *Simple Console Menu*
+##### Guided Walkthrough of the Studio Interface:
 
-1. Right-click **`build.cmd`** and select **Run as administrator** (or double-click it).
-2. An interactive terminal menu opens immediately:
+| Control / Setting | What It Does | Recommended Choice |
+| :--- | :--- | :--- |
+| **Source ISO Image** | The clean Windows 11 ISO file you downloaded from Microsoft. | Click **Browse...** and select your `.iso` file. |
+| **Staging Workspace** | Temporary scratch folder where image files are mounted and serviced. | Leave as default (`C:\WIB\work`). Requires 25–40 GB free space on NTFS. |
+| **Build Profile** | The preset that determines which bloatware, services, and telemetry to trim. | **`balanced`** for everyday workstations; **`lean`** for gaming rigs & VMs. |
+| **Target Edition** | Selects which Windows edition inside the ISO to customize (Pro, Home, Enterprise). | **Auto-detect (Single Edition)** or select your specific edition index. |
+| **Hardware Profile** | Adapts optimizations to your processor, RAM, and graphics capabilities. | **Live Host (CIM Auto-Detect)** to match your current machine. |
+| **Dry-run simulation only** | Tests the entire pipeline in ~10 seconds without writing changes to disk. | Check this box if you want a zero-risk dry run before your real build. |
+| **Download signed oscdimg** | Downloads and verifies Microsoft's official ISO packager if ADK is not installed. | Leave checked (recommended). |
+| **Resume from checkpoint** | Resumes a build if your PC lost power or restarted during a previous run. | Unchecked for fresh builds; check if recovering an interrupted build. |
+| **Preview Plan** button | Generates a complete diagnostic manifest showing all planned package removals. | Click to review before building. |
+| **Start Build** button | Launches the offline servicing engine and creates your finalized ISO. | Click when you are ready to produce the new ISO. |
+
+---
+
+#### Option 2: Interactive Terminal Menu (`build.cmd`) &mdash; *Simple Console Menu*
+
+1. Double-click **`build.cmd`** (or right-click and choose **Run as administrator**).
+2. A status dashboard opens displaying your session privileges and available profiles:
    ```text
    ================================================================================
      WIB: Windows Image Builder (v0.2.29)
@@ -118,81 +152,125 @@ No command typing required!
      4. Preview Execution Plan:  .\build.ps1 -IsoPath "D:\Win11.iso" -Command plan
      5. Execute Full Build:      .\build.ps1 -IsoPath "D:\Win11.iso" -ProfileName balanced
    --------------------------------------------------------------------------------
-     Select an option: [G] GUI Studio | [V] Validate | [L] List Modules | [Enter] Exit
+     Options: [G] Launch WIB Studio GUI | [V] Validate Profile | [L] List Modules | [Enter] Exit
    ```
-3. Type `G` and press **Enter** to open the GUI, or select any option.
+3. Press **`G`** to launch the GUI, **`V`** to test profile validity, **`L`** to list modules, or **`Enter`** to exit.
+4. *Built-in crash protection:* `build.cmd` automatically pauses on completion or error so the window never disappears before you read the output.
 
-#### Option 3: PowerShell Command Line (`build.ps1`) -- *Power Users & Automation*
+---
 
-Open **Windows PowerShell** as Administrator (press `Win + X` -> select **Terminal (Admin)** or **Windows PowerShell (Admin)**), then navigate to your WIB folder:
+#### Option 3: PowerShell Command Line (`build.ps1`) &mdash; *Power Users & Automated Scripts*
+
+Open **Windows PowerShell** as Administrator (press `Win + X` &rarr; select **Terminal (Admin)** or **Windows PowerShell (Admin)**):
 
 ```powershell
 cd C:\WIB
 ```
 
-##### 1. Inspect Modules & Validate Profiles (No ISO Required)
+##### 1. Inspect Servicing Modules (No ISO Needed)
+Lists all 19 servicing modules, risk tiers, and reversibility mechanisms:
 ```powershell
-# List all 14 registered servicing modules, execution order, and risk ratings:
 .\build.ps1 -Command list
+```
 
-# Validate profile syntax, schema rules, and inheritance chains:
+##### 2. Validate Profiles (No ISO Needed)
+Validates profile syntax, inheritance hierarchy, and JSON schema rules:
+```powershell
 .\build.ps1 -Command validate -ProfileName balanced
 ```
 
-##### 2. Preview Changes Without Writing (Dry-Run Plan)
-Mounts the image in a temporary sandbox, inspects packages, builds a complete report, and dismounts cleanly without writing changes:
+##### 3. Preview Execution Plan (Dry-Run Preview)
+Mounts the image in a sandbox, evaluates all package removals, writes a preview report, and dismounts cleanly:
 ```powershell
 .\build.ps1 `
-    -IsoPath "C:\ISOs\Win11_26H2_English_x64.iso" `
+    -IsoPath "C:\ISOs\Win11_English_x64.iso" `
     -ProfileName balanced `
     -Command plan
 ```
 
-##### 3. Execute Full Build
-Builds your customized Windows 11 installation ISO:
+##### 4. Execute Full Image Build
+Runs the complete offline servicing pipeline and generates a bootable ISO:
 ```powershell
 .\build.ps1 `
-    -IsoPath "C:\ISOs\Win11_26H2_English_x64.iso" `
+    -IsoPath "C:\ISOs\Win11_English_x64.iso" `
     -ProfileName balanced `
     -OutputIso "C:\ISOs\Win11_Custom_Balanced.iso"
 ```
-
-##### 4. Automated Build with Hardware Bypass & Profiles
-Use the `balanced` or `lean` profile, which include the `hardware-check-bypass` and `oobe-local-account` modules out-of-the-box to bypass TPM 2.0 / Secure Boot checks:
-```powershell
-.\build.ps1 `
-    -IsoPath "C:\ISOs\Win11_26H2_English_x64.iso" `
-    -ProfileName balanced `
-    -OutputIso "C:\ISOs\Win11_Custom_Bypass.iso"
-```
-*(To generate standalone customized `autounattend.xml` answer files, use `.\tools\New-WibUnattend.ps1`)*
 
 ---
 
 ### Command Line Parameter Reference
 
-| Parameter | What It Does | What to Give (Example) | Required? |
+| Parameter | What It Does | Example Value | Required? |
 | :--- | :--- | :--- | :--- |
-| **`-IsoPath`** | Full path to the clean Windows 11 ISO downloaded from Microsoft. | `"C:\ISOs\Win11_26H2.iso"` | Yes (for build and plan) |
+| **`-IsoPath`** | Full path to the clean Windows 11 source ISO file. | `"C:\ISOs\Win11_26H2.iso"` | Yes (for build and plan) |
 | **`-ProfileName`** | The customization profile preset to apply (`balanced`, `lean`, `adaptive`, `hardening`, `custom-risk`). | `balanced` | No (defaults to `balanced`) |
-| **`-OutputIso`** | File path where your finished, customized ISO should be saved. | `"C:\ISOs\Win11_Clean.iso"` | Recommended for builds |
-| **`-Command`** | The operation to perform: `build` (default), `plan` (dry-run preview), `validate` (schema check), or `list` (show modules). | `build`, `plan`, `validate`, or `list` | No (defaults to `build`) |
-| **`-Gui`** | Launches the desktop graphical user interface. | Switch flag: `-Gui` | Optional |
-| **`-NoElevate`** | Runs GUI or preview inspection without prompting for elevation. | Switch flag: `-NoElevate` | Optional |
+| **`-OutputIso`** | File path where your finished customized ISO will be saved. | `"C:\ISOs\Win11_Custom.iso"` | Recommended for builds |
+| **`-Command`** | Operation: `build` (default), `plan` (preview), `validate` (schema check), or `list` (show modules). | `build`, `plan`, `validate`, `list` | No (defaults to `build`) |
+| **`-Gui`** | Launches the desktop graphical user interface directly from the CLI. | Switch flag: `-Gui` | Optional |
+| **`-NoElevate`** | Runs GUI or validation without prompting for UAC elevation (preview mode). | Switch flag: `-NoElevate` | Optional |
 | **`-WorkDir`** | Custom folder for temporary image mounting and servicing files. | `"D:\Scratch\WibWork"` | No (defaults to `.\work` on NTFS) |
-| **`-DownloadOscdimg`** | Automatically downloads and verifies official Microsoft `oscdimg.exe` if not found in ADK. | Switch flag: `-DownloadOscdimg` | Optional |
-| **`-ExpectedIsoSha256`** | SHA-256 hash to verify the input ISO has not been modified or corrupted. | `"5A1B2C..."` | Optional |
+| **`-DownloadOscdimg`** | Downloads and cryptographically verifies official Microsoft `oscdimg.exe`. | Switch flag: `-DownloadOscdimg` | Optional |
+| **`-ExpectedIsoSha256`** | SHA-256 hash to verify the source ISO has not been corrupted or tampered with. | `"5A1B2C..."` | Optional |
+| **`-DryRun`** | Alias for `-Command plan` (generates execution report without saving changes). | Switch flag: `-DryRun` | Optional |
+| **`-Resume`** | Resumes an interrupted servicing run from its last verified checkpoint. | Switch flag: `-Resume` | Optional |
 
 ---
 
 ### Step 4: Testing & Installing Your Custom Windows
 
-1. **Always Test in a Virtual Machine First:**
-   * Before deploying to physical computers, create a temporary VM in **Hyper-V**, **VirtualBox**, or **Proxmox**.
-   * Attach your new ISO (`Win11_Custom_Balanced.iso`) and confirm setup boots to the desktop cleanly.
-2. **Flash to USB for Bare-Metal Installation:**
-   * Use [Rufus](https://rufus.ie/) or [Ventoy](https://ventoy.net/) to write your customized ISO to a USB flash drive.
-   * Boot your target PC from the USB drive to install optimized, bloat-free Windows 11.
+1. **Always Test in a Virtual Machine First (Recommended):**
+   * Before installing on physical hardware, create a temporary VM in **Hyper-V**, **VirtualBox**, or **VMware Player**.
+   * Mount your newly generated ISO file (e.g. `Win11_Custom_Balanced.iso`) as the virtual optical drive.
+   * Boot the VM and verify that Windows Setup completes smoothly to the desktop.
+2. **Flash to a USB Flash Drive for Physical PC Installation:**
+   * **Using Rufus:**
+     * Download [Rufus](https://rufus.ie/).
+     * Select your USB flash drive (8 GB+).
+     * Choose your new custom ISO file.
+     * Click **START** to write the installer to the USB drive.
+   * **Using Ventoy:**
+     * Install [Ventoy](https://ventoy.net/) onto your USB drive.
+     * Simply copy your new custom `.iso` file directly onto the Ventoy USB drive.
+3. **Boot & Install:**
+   * Plug the USB drive into your PC, enter your BIOS/UEFI boot menu (usually `F12`, `F11`, or `Del`), boot from the USB drive, and enjoy your clean, fast Windows 11 installation!
+
+---
+
+### Beginner FAQ & Troubleshooting
+
+<details>
+<summary><strong>Q: Why do live builds require Administrator permissions?</strong></summary>
+
+Windows offline servicing uses official Microsoft DISM filter drivers (`wimmount.sys`) and registry hive mounting (`reg.exe load`). These operating system servicing APIs require kernel-level filesystem privileges to mount and unpack WIM images. **WIB never alters your host computer**&mdash;it only uses servicing privileges inside the temporary staging folder (`.\work`).
+</details>
+
+<details>
+<summary><strong>Q: Can I run WIB without Administrator permissions?</strong></summary>
+
+Yes! You can run in **Preview Mode** without any admin prompt. Just launch `.\tools\launch-gui.ps1 -NoElevate` or run `.\build.ps1 -Command validate -ProfileName balanced`. You can inspect all 19 servicing modules, view profile trade-offs, and check schemas with standard user rights.
+</details>
+
+<details>
+<summary><strong>Q: Does this break the Microsoft Store, Xbox, or Windows Update?</strong></summary>
+
+**No.** Unlike crude internet debloat scripts that aggressively rip out system packages, WIB enforces hard architectural safety invariants:
+* The Microsoft Store (`Microsoft.WindowsStore`) and `winget` package manager are strictly preserved.
+* Xbox Identity Provider and gaming frameworks remain fully operational.
+* Windows Update and Component Store servicing integrity are preserved so future security updates install cleanly.
+</details>
+
+<details>
+<summary><strong>Q: What if my computer shuts down or the build is interrupted?</strong></summary>
+
+WIB includes a transactional checkpoint system. If a build is interrupted, simply launch WIB again and check the **Resume from checkpoint** option (or pass `-Resume` on the command line). WIB will verify disk integrity and resume directly from the last successful servicing stage without starting over.
+</details>
+
+<details>
+<summary><strong>Q: Where is my finished ISO saved?</strong></summary>
+
+By default, the finished ISO is saved directly in your WIB project folder with the name `wib-<profile>-<date>-<id>.iso` (for example: `wib-balanced-20261010-A1B2C3D4.iso`). In the GUI, you can also specify a custom destination path in the *Custom Output ISO* field.
+</details>
 
 ---
 
