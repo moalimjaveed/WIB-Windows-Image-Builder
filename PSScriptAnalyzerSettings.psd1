@@ -8,6 +8,16 @@
         'PSUseShouldProcessForStateChangingFunctions',
         'PSUseSingularNouns',
         'PSAvoidGlobalFunctions',
-        'PSAvoidUsingPlainTextForPassword'
+        'PSAvoidUsingPlainTextForPassword',
+        'PSAvoidUsingConvertToSecureStringWithPlainText',
+        'PSReviewUnusedParameter',
+        'PSUseDeclaredVarsMoreThanAssignments',
+        'PSAvoidGlobalVars',
+        'PSAvoidUsingEmptyCatchBlock',
+        'PSPossibleIncorrectComparisonWithNull',
+        'PSUseApprovedVerbs',
+        'PSAvoidAssignmentToAutomaticVariable',
+        'PSAvoidOverwritingBuiltInCmdlets',
+        'PSUseProcessBlockForPipelineCommand'
     )
 }
