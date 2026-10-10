@@ -1,0 +1,27 @@
+{
+  "profile": "sample-gaming",
+  "version": 1,
+  "extends": "balanced",
+  "description": "Example child profile overriding visual effects and appending extra AppX removals",
+  "modules": {
+    "visual-effects": {
+      "enabled": true,
+      "disableTransparency": true,
+      "disableAnimations": true
+    },
+    "appx-removal": {
+      "enabled": true,
+      "addRemove": [
+        "Microsoft.BingNews",
+        "Microsoft.BingWeather"
+      ],
+      "keep": [
+        "Microsoft.WindowsStore",
+        "Microsoft.XboxApp"
+      ]
+    },
+    "copilot-teams-block": {
+      "enabled": true
+    }
+  }
+}

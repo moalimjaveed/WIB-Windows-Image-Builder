@@ -1,0 +1,10 @@
+{
+  "profile": "adaptive",
+  "version": 1,
+  "extends": "balanced",
+  "adaptive": true,
+  "modules": {
+    "visual-effects": { "enabled": true },
+    "services-tuning": { "enabled": true }
+  }
+}

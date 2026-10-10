@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WIB &mdash; Windows Image Builder | Auditable Offline Windows 11 Image Customization</title>
+  <meta name="description" content="Manifest-driven PowerShell engine for planning, customizing, and auditing offline Windows 11 installation media using native Microsoft DISM and registry tooling.">
+  <meta name="author" content="WIB Contributors">
+
+  <link rel="canonical" href="https://moalimjaveed.github.io/WIB-Windows-Image-Builder/">
+
+  <!-- Open Graph / Social Sharing -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://moalimjaveed.github.io/WIB-Windows-Image-Builder/">
+  <meta property="og:title" content="WIB &mdash; Windows Image Builder">
+  <meta property="og:description" content="Auditable, transparent, and reproducible offline Windows 11 image customization with native DISM, offline registry hives, and verifiable rollback manifests.">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="WIB &mdash; Windows Image Builder">
+  <meta name="twitter:description" content="Auditable, transparent, and reproducible offline Windows 11 image customization with native DISM, offline registry hives, and verifiable rollback manifests.">
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Windows Image Builder (WIB)",
+    "operatingSystem": "Windows 10 (21H2+), Windows 11 (21H2-26H2, 26H2 latest & recommended)",
+    "applicationCategory": "DeveloperApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "description": "Manifest-driven PowerShell engine for offline Windows 11 image customization built on native Microsoft DISM and offline registry tooling.",
+    "softwareVersion": "0.2.29",
+    "license": "https://opensource.org/licenses/MIT"
+  }
+  </script>
+
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-card: #1e293b;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --border: #334155;
+      --warning: #f59e0b;
+      --code-bg: #090d16;
+      --font-mono: 'Consolas', 'Courier New', monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      padding: 0;
+    }
+
+    header {
+      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      padding: 4rem 1.5rem 3rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 9999px;
+      background-color: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: 2.75rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 1rem;
+    }
+    .hero-lead {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      max-width: 760px;
+      margin: 0 auto 2rem;
+    }
+
+    .cta-group {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-primary {
+      background-color: var(--accent);
+      color: #0f172a;
+    }
+    .btn-primary:hover {
+      background-color: var(--accent-hover);
+    }
+    .btn-secondary {
+      background-color: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      background-color: #273549;
+    }
+
+    a:focus-visible, .btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    .disclaimer-box {
+      background-color: rgba(245, 158, 11, 0.1);
+      border-left: 4px solid var(--warning);
+      padding: 1.25rem;
+      border-radius: 4px;
+      margin: 2rem auto;
+      max-width: 840px;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+    .disclaimer-title {
+      font-weight: 700;
+      color: var(--warning);
+      margin-bottom: 0.35rem;
+    }
+
+    section {
+      padding: 3.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    h2 {
+      font-size: 1.85rem;
+      margin-bottom: 1.25rem;
+      letter-spacing: -0.01em;
+    }
+    p { margin-bottom: 1rem; color: var(--text-secondary); }
+    p strong { color: var(--text-primary); }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+    }
+    .card h3 {
+      font-size: 1.2rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+    }
+
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: var(--bg-card);
+      min-width: 600px;
+    }
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.95rem;
+    }
+    th {
+      background-color: #162032;
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    tr:last-child td { border-bottom: none; }
+
+    pre {
+      background-color: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: #38bdf8;
+      margin: 1rem 0;
+      line-height: 1.5;
+    }
+
+    footer {
+      padding: 3rem 1.5rem;
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      background-color: #0b1120;
+    }
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .btn { transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container">
+      <div class="badge">Offline Windows Image Engineering &middot; v0.2.29</div>
+      <h1>WIB: Windows Image Builder</h1>
+      <p class="hero-lead">
+        A manifest-driven PowerShell engine for offline Windows 11 image customization. Built on native DISM and offline registry tooling &mdash; zero opaque third-party binary wrappers.
+      </p>
+      <div class="cta-group">
+        <a href="#quickstart" class="btn btn-primary">Quick Start</a>
+        <a href="#features" class="btn btn-secondary">Architecture &amp; Features</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <section id="features">
+      <h2>Why Windows Image Builder?</h2>
+      <p>
+        Most Windows debloating scripts run undocumented registry commands directly on a live system, risking bricked OS updates, broken dependencies, and irreversible configuration drift. WIB operates offline on the official installation media before setup.
+      </p>
+      <div class="grid-3">
+        <div class="card">
+          <h3>&#128737; Isolated Offline Servicing</h3>
+          <p>Mounts and modifies target WIM files inside isolated temporary mount points using native Microsoft tools (<code>dism.exe</code>, <code>oscdimg.exe</code>). Zero configuration changes to your live host operating system.</p>
+        </div>
+        <div class="card">
+          <h3>&#128221; Scoped Rollback Journals</h3>
+          <p>Registry modifications generate an in-image undo journal (<code>journal.reg</code> and <code>journal.json</code>) for post-installation inspection and reversal via <code>WibPanel.ps1</code>.</p>
+        </div>
+        <div class="card">
+          <h3>&#128274; Handle-Bound File Security</h3>
+          <p>Employs kernel handle-bound deletions and strict DACL verification on sensitive manifests and recovery ledgers to defend against concurrent path redirection and unowned file substitution.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="profiles">
+      <h2>Curated Built-in Profiles</h2>
+      <p>Select a profile tailored to your deployment scenario:</p>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Profile</th>
+              <th>Target Scenario</th>
+              <th>AppX Packages</th>
+              <th>Telemetry Policy</th>
+              <th>Security Controls</th>
+              <th>Rollback Scope</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>balanced</strong></td>
+              <td>Daily drivers &amp; workstations</td>
+              <td>Removes consumer bloat</td>
+              <td>Configured to Basic / Required</td>
+              <td>Preserved intact</td>
+              <td>Registry undo journal; AppX re-installable via Store</td>
+            </tr>
+            <tr>
+              <td><strong>lean</strong></td>
+              <td>Lab VMs &amp; high performance</td>
+              <td>Removes non-essential apps</td>
+              <td>Minimized per edition policy</td>
+              <td>Preserved intact</td>
+              <td>Registry undo journal; AppX re-installable via Store</td>
+            </tr>
+            <tr>
+              <td><strong>adaptive</strong></td>
+              <td>Hardware-aware baseline</td>
+              <td>Dynamic package selection</td>
+              <td>Tuned to detected hardware</td>
+              <td>Preserved intact</td>
+              <td>Registry undo journal</td>
+            </tr>
+            <tr>
+              <td><strong>hardening</strong></td>
+              <td>High-security / compliance</td>
+              <td>Minimal attack surface</td>
+              <td>Auditing &amp; restrictions</td>
+              <td>Enhanced defensive policies</td>
+              <td>Registry undo journal</td>
+            </tr>
+            <tr>
+              <td><strong>custom-risk</strong></td>
+              <td>Isolated test environments</td>
+              <td>Aggressive stripping</td>
+              <td>Experimental</td>
+              <td>Requires <code>-AcceptRisk</code></td>
+              <td>Partial / Advanced</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="quickstart">
+      <h2>Quick Start</h2>
+      <p>WIB requires <strong>Windows 10/11 x64</strong>, <strong>PowerShell 5.1 or 7.4+</strong>, and an elevated Administrator prompt for image mounting.</p>
+
+      <h3>1. Validate and Dry-Run (Preview Plan)</h3>
+      <p>The <code>plan</code> command mounts the image in a temporary workspace, catalogs packages and features, and generates a preview report without modifying the source media:</p>
+      <pre><code># Elevated Administrator session
+.\build.ps1 `
+  -IsoPath "C:\ISOs\Win11_26H2_English_x64.iso" `
+  -ProfileName balanced `
+  -Command plan</code></pre>
+
+      <h3>2. Build Custom Media</h3>
+      <pre><code># Elevated Administrator session
+.\build.ps1 `
+  -IsoPath "C:\ISOs\Win11_26H2_English_x64.iso" `
+  -ProfileName balanced `
+  -OutputIso "C:\Images\Win11_Custom_Balanced.iso" `
+  -ExpectedIsoSha256 "&lt;KNOWN_MICROSOFT_SHA256&gt;"</code></pre>
+    </section>
+
+    <section id="security">
+      <h2>Security &amp; Operational Boundaries</h2>
+      <ul style="margin-left: 1.5rem; color: var(--text-secondary); line-height: 1.8;">
+        <li><strong>Unattended Credentials Notice:</strong> Microsoft Windows Setup answer file passwords are Base64 obscured, not encrypted. Anyone with read access to the installation media can decode them. Always use unique, temporary credentials.</li>
+        <li><strong>Hash Integrity vs. Provenance:</strong> The <code>-ExpectedIsoSha256</code> parameter verifies cryptographic file integrity against the digest you provide. Authenticity requires independently verifying the hash against official Microsoft release publications.</li>
+        <li><strong>No Third-Party Executables:</strong> WIB runtime relies exclusively on official Microsoft Windows components (<code>dism.exe</code>, <code>reg.exe</code>, <code>oscdimg.exe</code>).</li>
+        <li><strong>Windows PowerShell 5.1 Strictly Maintained:</strong> Engineered for enterprise compatibility without requiring external module installations.</li>
+      </ul>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>WIB is open-source software licensed under the <a href="https://opensource.org/licenses/MIT">MIT License</a>.</p>
+      <p style="margin-top: 0.5rem; color: var(--text-secondary);">
+        Windows Image Builder is an independent open-source project and is not affiliated with Microsoft Corporation.
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

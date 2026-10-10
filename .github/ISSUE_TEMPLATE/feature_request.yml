@@ -1,0 +1,41 @@
+name: Feature Request
+description: Suggest an idea or enhancement for Windows Image Builder
+title: "[FEATURE]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting an enhancement! Please explain how this proposed feature aligns with WIB's design principles (manifest-driven, previewable, reversible, first-party tools only).
+  - type: textarea
+    id: problem_statement
+    attributes:
+      label: Problem Statement
+      description: Is your feature request related to a problem or limitation? (e.g., "I'm always frustrated when...")
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution or capability you would like to see added.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives_considered
+    attributes:
+      label: Alternatives Considered
+      description: Any alternative solutions or workarounds you've considered.
+    validations:
+      required: false
+  - type: dropdown
+    id: compatibility_impact
+    attributes:
+      label: PowerShell Compatibility
+      description: Can this feature be implemented while maintaining Windows PowerShell 5.1 compatibility?
+      options:
+        - "Yes (Runs on Windows PowerShell 5.1 without PS 7+ syntax)"
+        - "Requires PowerShell 7+ (Requires PS 5.1 fallback design)"
+        - "Unsure"
+    validations:
+      required: true

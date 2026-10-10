@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Windows Image Builder (WIB)"
+abstract: "A manifest-driven PowerShell toolkit for planning, building, and auditing customized Windows 11 installation media with verified offline servicing and transactional rollback."
+version: 0.2.29
+date-released: 2026-10-10
+license: MIT
+authors:
+  - name: "Windows Image Builder Contributors"
+keywords:
+  - "windows-11"
+  - "powershell"
+  - "dism"
+  - "image-servicing"
+  - "unattended-setup"
+  - "oscdimg"
+url: "https://github.com/moalimjaveed/WIB-Windows-Image-Builder"
+repository-code: "https://github.com/moalimjaveed/WIB-Windows-Image-Builder"

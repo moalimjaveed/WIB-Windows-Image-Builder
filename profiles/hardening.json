@@ -1,0 +1,37 @@
+{
+  "profile": "hardening",
+  "version": 1,
+  "extends": "balanced",
+  "description": "Enterprise defensive security profile. Focuses on CIS/DISA hardening, advanced logging, network attack surface reduction, and RDP/SMB defenses.",
+  "modules": {
+    "audit-logging": {
+      "enabled": true,
+      "scriptBlockLogging": true,
+      "moduleLogging": true,
+      "commandLineAuditing": true
+    },
+    "network-hardening": {
+      "enabled": true,
+      "disableLlmnr": true,
+      "disableWpad": true,
+      "requireSmbSigning": true
+    },
+    "remote-access-hardening": {
+      "enabled": true,
+      "enforceNla": true,
+      "restrictAnonymousSam": true
+    },
+    "defender-hardening": {
+      "enabled": true,
+      "puaProtection": true,
+      "cloudProtection": true
+    },
+    "services-tuning": {
+      "enabled": true,
+      "disableServices": [
+        "dmwappushservice",
+        "DiagTrack"
+      ]
+    }
+  }
+}

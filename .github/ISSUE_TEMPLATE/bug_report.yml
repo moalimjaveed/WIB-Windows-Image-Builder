@@ -1,0 +1,75 @@
+name: Bug Report
+description: Create a report to help us improve Windows Image Builder
+title: "[BUG]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue! Before submitting, please check existing issues to avoid duplicates.
+        **CRITICAL NOTICE:** Never include license keys, passwords, proprietary Windows ISO download links, or unredacted personal credentials.
+  - type: input
+    id: environment_windows
+    attributes:
+      label: Host Windows Version
+      description: What version of Windows are you running WIB on? (Run `winver` or `[System.Environment]::OSVersion`)
+      placeholder: "Windows 11 Pro 23H2 (Build 22631.3447)"
+    validations:
+      required: true
+  - type: input
+    id: environment_powershell
+    attributes:
+      label: PowerShell Version
+      description: What PowerShell version are you running? (Run `$PSVersionTable.PSVersion`)
+      placeholder: "5.1.22621.2506 or 7.4.2"
+    validations:
+      required: true
+  - type: dropdown
+    id: elevation_status
+    attributes:
+      label: Execution Privilege
+      description: Was the PowerShell session elevated with Administrator rights?
+      options:
+        - "Elevated (Run as Administrator)"
+        - "Non-elevated (Standard User)"
+    validations:
+      required: true
+  - type: input
+    id: command_executed
+    attributes:
+      label: Command Executed
+      description: Exact command line used (redact any sensitive local paths or passwords).
+      placeholder: ".\build.ps1 -IsoPath 'C:\\ISOs\\Win11.iso' -ProfileName balanced -Command plan"
+    validations:
+      required: true
+  - type: textarea
+    id: bug_description
+    attributes:
+      label: Describe the Bug
+      description: A clear and concise description of what went wrong.
+    validations:
+      required: true
+  - type: textarea
+    id: console_output
+    attributes:
+      label: Console Output / Error Log
+      description: Paste relevant terminal output or error messages (ensure personal paths or keys are redacted).
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen instead.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety_confirmation
+    attributes:
+      label: Safety & Verification Confirmation
+      options:
+        - label: "I confirm that no proprietary Windows ISOs, WIMs, license keys, or unredacted credentials are included in this report."
+          required: true
+        - label: "I have verified that local smoke tests pass using `powershell -File .\\tests\\smoke.ps1`."
+          required: false

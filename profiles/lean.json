@@ -1,0 +1,51 @@
+{
+  "profile": "lean",
+  "version": 1,
+  "extends": "balanced",
+  "modules": {
+    "appx-removal": {
+      "addRemove": [
+        "AppUp.IntelManagementandSecurityStatus",
+        "DolbyLaboratories.DolbyAccess",
+        "Microsoft.Xbox.TCUI", "Microsoft.XboxGameOverlay", "Microsoft.XboxGamingOverlay", "Microsoft.XboxSpeechToTextOverlay",
+        "Microsoft.Paint", "Microsoft.MSPaint", "Microsoft.MicrosoftStickyNotes",
+        "Microsoft.WindowsAlarms", "Microsoft.WindowsCamera", "Microsoft.WindowsSoundRecorder",
+        "Microsoft.Office.OneNote", "Microsoft.OfficePushNotificationUtility",
+        "MicrosoftCorporationII.QuickAssist"
+      ]
+    },
+    "edge-removal": { "enabled": true, "removeWebView": false },
+    "features-cleanup": {
+      "enabled": true,
+      "removeFeatures": [
+        "Internet-Explorer-Optional-amd64",
+        "MediaPlayback"
+      ],
+      "removeCapabilities": [
+        "Browser.InternetExplorer",
+        "App.StepsRecorder",
+        "MathRecognizer",
+        "App.Support.QuickAssist"
+      ]
+    },
+    "services-tuning": {
+      "enabled": true,
+      "disableServices": [
+        "dmwappushservice",
+        "DiagTrack"
+      ]
+    },
+    "visual-effects": {
+      "enabled": true,
+      "disableTransparency": true,
+      "disableAnimations": true
+    },
+    "widgets-off": { "enabled": true },
+    "search-indexing": {
+      "enabled": true,
+      "startType": 4
+    },
+    "reserved-storage-off": { "enabled": true },
+    "bitlocker-auto-encrypt-off": { "enabled": true }
+  }
+}

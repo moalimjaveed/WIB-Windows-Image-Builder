@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  validate-and-test:
+    name: Lint, Parse & Smoke Tests
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Pin PSScriptAnalyzer
+        shell: powershell
+        run: |
+          Install-Module -Name PSScriptAnalyzer -RequiredVersion 1.22.0 -Repository PSGallery -Scope CurrentUser -Force
+
+      - name: Run PSScriptAnalyzer
+        shell: powershell
+        run: |
+          $paths = @('build.ps1', 'lib', 'modules', 'tools', 'tests')
+          $issues = @(foreach ($p in $paths) {
+            Invoke-ScriptAnalyzer -Path $p -Recurse -Settings .\PSScriptAnalyzerSettings.psd1 -Severity Warning, Error
+          })
+          if ($issues.Count -gt 0) {
+            $issues | Format-Table -AutoSize
+            throw "PSScriptAnalyzer found $($issues.Count) issue(s)."
+          } else {
+            Write-Host "PSScriptAnalyzer passed with zero warnings/errors." -ForegroundColor Green
+          }
+
+      - name: PowerShell parse check
+        shell: powershell
+        run: |
+          $failed = $false
+          Get-ChildItem -Path @('build.ps1', 'lib', 'modules', 'tools', 'tests') -Filter '*.ps1' -Recurse | ForEach-Object {
+            $tokens = $null; $errors = $null
+            $null = [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors)
+            if ($errors.Count -gt 0) {
+              Write-Error "Parse errors in $($_.FullName):"
+              $errors | ForEach-Object { Write-Error $_ }
+              $failed = $true
+            } else {
+              Write-Host "Parsed OK: $($_.FullName)" -ForegroundColor Green
+            }
+          }
+          if ($failed) { exit 1 }
+
+      - name: Run smoke tests in Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\smoke.ps1
+
+      - name: Run smoke tests in PowerShell 7+
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File .\tests\smoke.ps1
+
+      - name: Run real DISM integration test (elevation supported in runner)
+        shell: powershell
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\integration-dism.ps1
+
+      - name: Run behavioral release gates suite (G1-G22)
+        shell: powershell
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\verify-gates.ps1 -Gate All
+
+      - name: Strict release gate ledger lint
+        shell: powershell
+        run: |
+          node .\.agents\skills\unlazy\scripts\gate-lint.mjs --strict GATES.md
+
+      - name: Validate built-in profiles
+        shell: powershell
+        run: |
+          .\build.ps1 -Command validate -ProfileName balanced
+          .\build.ps1 -Command validate -ProfileName lean
+          .\build.ps1 -Command validate -ProfileName adaptive
+          .\build.ps1 -Command validate -ProfileName hardening
+          .\build.ps1 -Command list
+          powershell -File .\tools\New-WibUnattend.ps1 -OutputPath "$env:TEMP\ci-unattend.xml" -Force

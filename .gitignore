@@ -1,0 +1,59 @@
+# Windows Image Builder .gitignore
+
+# Working build directories & artifacts
+work/
+reports/
+*.iso
+*.wim
+*.esd
+*.swm
+*.vhd
+*.vhdx
+
+# Audit bundles, forensic dumps & scratch design notes
+WIB_*.txt
+*.audit.txt
+*Blueprint*.md
+*_Blueprint.md
+
+# Working build locks & state
+*.lock
+*.publock
+build.lock.json
+
+# Temporary files & backups
+*.tmp
+*.log
+*.bak
+*~
+*.swp
+
+# Test outputs & caches
+TestResults/
+*.clover
+*.coverage
+*_results.json
+smoke_results.json
+
+# Tools & Binaries
+oscdimg.exe
+
+# Unattend generated files
+autounattend.xml
+unattend.xml
+*.unattend.xml
+!templates/*.template.xml
+
+# Local workspace scratch
+scratch/
+.unlazy/
+
+# OS and Editor metadata
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+.vscode/
+.idea/
+*.suo
+*.user

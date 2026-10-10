@@ -1,0 +1,9 @@
+{
+  "profile": "custom-risk",
+  "version": 1,
+  "extends": "lean",
+  "modules": {
+    "mitigations-off": { "enabled": true },
+    "core-isolation-off": { "enabled": true }
+  }
+}

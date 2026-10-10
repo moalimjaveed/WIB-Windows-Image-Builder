@@ -1,0 +1,50 @@
+{
+  "profile": "balanced",
+  "version": 1,
+  "modules": {
+    "appx-removal": {
+      "enabled": true,
+      "remove": [
+        "Clipchamp.Clipchamp",
+        "Microsoft.BingNews", "Microsoft.BingSearch", "Microsoft.BingWeather",
+        "Microsoft.Copilot", "Microsoft.Windows.Copilot",
+        "Microsoft.Windows.CrossDevice", "Microsoft.YourPhone",
+        "Microsoft.GamingApp", "Microsoft.XboxApp",
+        "Microsoft.GetHelp", "Microsoft.Getstarted",
+        "Microsoft.Microsoft3DViewer", "Microsoft.MixedReality.Portal",
+        "Microsoft.MicrosoftOfficeHub", "Microsoft.MicrosoftSolitaireCollection",
+        "Microsoft.OutlookForWindows", "microsoft.windowscommunicationsapps",
+        "Microsoft.People", "Microsoft.PowerAutomateDesktop", "Microsoft.SkypeApp",
+        "Microsoft.Todos", "Microsoft.Wallet", "Microsoft.Windows.DevHome",
+        "Microsoft.Windows.Teams", "MSTeams", "MicrosoftTeams",
+        "Microsoft.WindowsFeedbackHub", "Microsoft.WindowsMaps",
+        "Microsoft.ZuneMusic", "Microsoft.ZuneVideo",
+        "MicrosoftCorporationII.MicrosoftFamily", "Microsoft.549981C3F5F10"
+      ],
+      "keep": [
+        "Microsoft.WindowsStore", "Microsoft.StorePurchaseApp", "Microsoft.DesktopAppInstaller",
+        "Microsoft.XboxIdentityProvider", "Microsoft.SecHealthUI",
+        "Microsoft.VCLibs", "Microsoft.UI.Xaml", "Microsoft.NET.Native"
+      ]
+    },
+    "features-cleanup": { "enabled": false },
+    "edge-removal": { "enabled": false, "removeWebView": false },
+    "onedrive-removal": { "enabled": true },
+    "tasks-cleanup": { "enabled": true },
+    "telemetry": { "enabled": true },
+    "sponsored-content": { "enabled": true },
+    "copilot-teams-block": { "enabled": true },
+    "services-tuning": { "enabled": false },
+    "oobe-local-account": { "enabled": true, "unattendPath": null },
+    "chat-icon-off": { "enabled": true },
+    "background-apps-off": { "enabled": true },
+    "hardware-check-bypass": { "enabled": false },
+    "reserved-storage-off": { "enabled": false },
+    "bitlocker-auto-encrypt-off": { "enabled": false },
+    "visual-effects": { "enabled": false },
+    "widgets-off": { "enabled": false },
+    "search-indexing": { "enabled": false },
+    "component-store-slim": { "enabled": true, "aggressive": false }
+  },
+  "output": { "compression": "recovery" }
+}

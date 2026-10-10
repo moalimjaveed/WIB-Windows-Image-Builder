@@ -1,0 +1,11 @@
+{
+  "targetHardware": {
+    "ramGB": 8,
+    "storageType": "SSD",
+    "cpuCores": 4,
+    "cpuName": "Intel Core i5",
+    "gpuType": "integrated",
+    "gpuName": "Intel Iris Xe Graphics",
+    "formFactor": "laptop"
+  }
+}

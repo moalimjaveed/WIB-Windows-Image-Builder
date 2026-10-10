@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "skills": {
+    "enterprise-windows-infrastructure-security": {
+      "source": "reason-machines/security-skills",
+      "sourceType": "github",
+      "skillPath": "skills/enterprise-windows-infrastructure-security/SKILL.md",
+      "computedHash": "d38e5917c37da239437dde89c76ea0f978b25bdce2a693d2b26f203ecced03f7"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "b146008599c31057cef1c145774cea5d5afb30e8f43fa802e47a4b461419aaaf"
+    },
+    "github-actions-efficiency": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/github-actions-efficiency/SKILL.md",
+      "computedHash": "92628da7f3eb2ae5625168f31587712a3cd77ac9ba5a23ffc24e86fd12c4408c"
+    },
+    "github-actions-hardening": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/github-actions-hardening/SKILL.md",
+      "computedHash": "10e35ff70fcf42e09295ffad0ac3203e4d6b6f74557cc3fa1654112b89e0eea2"
+    },
+    "github-actions-runtime-upgrade-conventions": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/github-actions-runtime-upgrade-conventions/SKILL.md",
+      "computedHash": "a2086c47b046d101d92435bd4631ff040401bb7d42205868f14209beda58ef4a"
+    },
+    "pester-migration": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/pester-migration/SKILL.md",
+      "computedHash": "470406452ae53f836183270058327b5106e30d5deea64f36fcd1736150da33e7"
+    },
+    "powershell-5.1-expert": {
+      "source": "belokonm/claude-supercode-skills",
+      "sourceType": "github",
+      "skillPath": "powershell-5.1-expert-skill/SKILL.md",
+      "computedHash": "ebdf9b668c4071aedba4e73f085af53bfef5485575756184a3e43dddd2245f70"
+    },
+    "powershell-module-architect": {
+      "source": "belokonm/claude-supercode-skills",
+      "sourceType": "github",
+      "skillPath": "powershell-module-architect-skill/SKILL.md",
+      "computedHash": "c89b2652224e4c998dc1db2fcc0c565a12c06258260a11048a4c04f59d8e70c9"
+    },
+    "powershell-windows": {
+      "source": "vudovn/ag-kit",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/powershell-windows/SKILL.md",
+      "computedHash": "b39cff1a14b051890ad8342d42f350fd8ec8737f489f3055158cc7dd86c6172e"
+    },
+    "test-analysis-extensions": {
+      "source": "dotnet/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/dotnet-test/skills/test-analysis-extensions/SKILL.md",
+      "computedHash": "d2b87e9658f2c3219ae234f257e2f98b6ee51cdb214c1f6babc4091790204c14"
+    },
+    "test-tagging": {
+      "source": "dotnet/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/dotnet-test/skills/test-tagging/SKILL.md",
+      "computedHash": "a24043ebbaf2079e5bd670775cce907cc38f42d41e3ba3909a50baa96e5330db"
+    },
+    "unlazy": {
+      "source": "Leonxlnx/unlazy",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "a1bf30a55d48d779db99b45d5b89004dd5eab0a0a4fe2b952188aae45c9d486b"
+    },
+    "winapp-ui-automation": {
+      "source": "microsoft/winappcli",
+      "sourceType": "github",
+      "skillPath": "plugins/winapp/skills/winapp-ui-automation/SKILL.md",
+      "computedHash": "5b39d8a35300440645d0c83f7b8cfe71baca23eaa2dd8ff772d62eb08697a465"
+    }
+  }
+}

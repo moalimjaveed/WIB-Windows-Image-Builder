@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://moalimjaveed.github.io/WIB-Windows-Image-Builder/sitemap.xml

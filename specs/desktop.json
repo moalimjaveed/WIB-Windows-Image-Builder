@@ -1,0 +1,11 @@
+{
+  "targetHardware": {
+    "ramGB": 32,
+    "storageType": "NVMe",
+    "cpuCores": 8,
+    "cpuName": "AMD Ryzen 7",
+    "gpuType": "discrete",
+    "gpuName": "NVIDIA GeForce RTX",
+    "formFactor": "desktop"
+  }
+}
