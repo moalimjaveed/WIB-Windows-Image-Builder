@@ -1182,6 +1182,9 @@ function Set-WibDurableJsonFile {
 
         $postReadBack = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
         $postParsed = ConvertFrom-Json -InputObject $postReadBack -ErrorAction Stop
+        if ($null -eq $postParsed -and ($postReadBack.Trim() -replace '\s+', '') -eq '[]') {
+            $postParsed = @()
+        }
         if ($null -eq $postParsed -and $null -ne $Data) {
             throw "Post-replacement JSON verification failed for '$Path'."
         }

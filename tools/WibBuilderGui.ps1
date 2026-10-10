@@ -9,7 +9,7 @@
     PowerShell 5.1+ compatible, zero external dependencies.
 #>
 
-[CmdletBinding()]
+[CmdletBinding(PositionalBinding = $false)]
 param(
     [switch]$NoElevate,
     [string]$ScreenshotPath,
@@ -33,7 +33,8 @@ if (Test-Path -LiteralPath $modDir) {
 # Elevation state detection
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $isAdmin -and -not $NoElevate) {
-    Start-Process powershell.exe -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
+    $elevateArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$PSCommandPath`"")
+    Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList $elevateArgs
     return
 }
 
@@ -67,22 +68,17 @@ $theme = @{
     TerminalFg      = [System.Drawing.Color]::FromArgb(226, 232, 240)
 }
 
-# Typography Hierarchy
+# Typography Hierarchy (Native Windows Segoe UI for crisp ClearType rendering)
 $fontFamily = 'Segoe UI'
-try {
-    $testFont = New-Object System.Drawing.Font('Segoe UI Variable Text', 9)
-    $fontFamily = 'Segoe UI Variable Text'
-    $testFont.Dispose()
-} catch {}
 
 $fonts = @{
     AppTitle    = New-Object System.Drawing.Font($fontFamily, 14, [System.Drawing.FontStyle]::Bold)
     SectionHdr  = New-Object System.Drawing.Font($fontFamily, 10.5, [System.Drawing.FontStyle]::Bold)
     SubHdr      = New-Object System.Drawing.Font($fontFamily, 9, [System.Drawing.FontStyle]::Bold)
     Body        = New-Object System.Drawing.Font($fontFamily, 9, [System.Drawing.FontStyle]::Regular)
-    Small       = New-Object System.Drawing.Font($fontFamily, 8.25, [System.Drawing.FontStyle]::Regular)
-    SmallBold   = New-Object System.Drawing.Font($fontFamily, 8.25, [System.Drawing.FontStyle]::Bold)
-    Console     = New-Object System.Drawing.Font('Consolas', 9, [System.Drawing.FontStyle]::Regular)
+    Small       = New-Object System.Drawing.Font($fontFamily, 8.5, [System.Drawing.FontStyle]::Regular)
+    SmallBold   = New-Object System.Drawing.Font($fontFamily, 8.5, [System.Drawing.FontStyle]::Bold)
+    Console     = New-Object System.Drawing.Font('Consolas', 9.5, [System.Drawing.FontStyle]::Regular)
 }
 
 # ---------------------------------------------------------------------------
@@ -90,8 +86,8 @@ $fonts = @{
 # ---------------------------------------------------------------------------
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "WIB: Windows Image Builder Studio"
-$form.Size = New-Object System.Drawing.Size(960, 810)
-$form.MinimumSize = New-Object System.Drawing.Size(900, 720)
+$form.Size = New-Object System.Drawing.Size(960, 840)
+$form.MinimumSize = New-Object System.Drawing.Size(920, 760)
 $form.StartPosition = 'CenterScreen'
 $form.Font = $fonts.Body
 $form.BackColor = $theme.BgWindow
@@ -101,7 +97,7 @@ $form.BackColor = $theme.BgWindow
 # ---------------------------------------------------------------------------
 $pnlHeader = New-Object System.Windows.Forms.Panel
 $pnlHeader.Dock = 'Top'
-$pnlHeader.Height = 56
+$pnlHeader.Height = 72
 $pnlHeader.BackColor = $theme.BgWindow
 $form.Controls.Add($pnlHeader)
 
@@ -109,7 +105,7 @@ $lblAppTitle = New-Object System.Windows.Forms.Label
 $lblAppTitle.Text = "Windows Image Builder Studio"
 $lblAppTitle.Font = $fonts.AppTitle
 $lblAppTitle.ForeColor = $theme.TextPrimary
-$lblAppTitle.Location = New-Object System.Drawing.Point(24, 12)
+$lblAppTitle.Location = New-Object System.Drawing.Point(24, 14)
 $lblAppTitle.AutoSize = $true
 $pnlHeader.Controls.Add($lblAppTitle)
 
@@ -117,7 +113,7 @@ $lblAppSub = New-Object System.Windows.Forms.Label
 $lblAppSub.Text = "Hardware-adaptive, verifiable Windows 11 offline servicing engine"
 $lblAppSub.Font = $fonts.Small
 $lblAppSub.ForeColor = $theme.TextSecondary
-$lblAppSub.Location = New-Object System.Drawing.Point(25, 36)
+$lblAppSub.Location = New-Object System.Drawing.Point(25, 44)
 $lblAppSub.AutoSize = $true
 $pnlHeader.Controls.Add($lblAppSub)
 
@@ -129,7 +125,7 @@ if ($isAdmin) {
 }
 $lblSessionInfo.Font = $fonts.Small
 $lblSessionInfo.ForeColor = $theme.TextSecondary
-$lblSessionInfo.Location = New-Object System.Drawing.Point(540, 18)
+$lblSessionInfo.Location = New-Object System.Drawing.Point(600, 18)
 $lblSessionInfo.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
 $lblSessionInfo.AutoSize = $true
 $pnlHeader.Controls.Add($lblSessionInfo)
@@ -248,7 +244,7 @@ $lblConfigHdr = New-Object System.Windows.Forms.Label
 $lblConfigHdr.Text = "Configuration"
 $lblConfigHdr.Font = $fonts.SectionHdr
 $lblConfigHdr.ForeColor = $theme.TextPrimary
-$lblConfigHdr.Location = New-Object System.Drawing.Point(24, 52)
+$lblConfigHdr.Location = New-Object System.Drawing.Point(24, 48)
 $lblConfigHdr.AutoSize = $true
 $tabStudio.Controls.Add($lblConfigHdr)
 
@@ -256,14 +252,14 @@ $lblConfigDesc = New-Object System.Windows.Forms.Label
 $lblConfigDesc.Text = "Specify the source installation image, target hardware, and servicing profile."
 $lblConfigDesc.Font = $fonts.Small
 $lblConfigDesc.ForeColor = $theme.TextSecondary
-$lblConfigDesc.Location = New-Object System.Drawing.Point(25, 73)
+$lblConfigDesc.Location = New-Object System.Drawing.Point(25, 69)
 $lblConfigDesc.AutoSize = $true
 $tabStudio.Controls.Add($lblConfigDesc)
 
-# Fields container (Clean, borderless)
+# Fields container (Clean, borderless, symmetric layout)
 $pnlFields = New-Object System.Windows.Forms.Panel
-$pnlFields.Location = New-Object System.Drawing.Point(24, 94)
-$pnlFields.Size = New-Object System.Drawing.Size(896, 175)
+$pnlFields.Location = New-Object System.Drawing.Point(24, 90)
+$pnlFields.Size = New-Object System.Drawing.Size(896, 178)
 $pnlFields.BackColor = $theme.BgWindow
 $tabStudio.Controls.Add($pnlFields)
 
@@ -293,41 +289,70 @@ $btnBrowseIso.BackColor = $theme.BtnSecondaryBg
 $btnBrowseIso.ForeColor = $theme.BtnSecondaryFg
 $pnlFields.Controls.Add($btnBrowseIso)
 
-# Row 2: Profile Selection & Edition
+# Row 2: Staging Workspace (Full width path, matching Row 1)
+$lblWork = New-Object System.Windows.Forms.Label
+$lblWork.Text = "Staging Workspace"
+$lblWork.Font = $fonts.Small
+$lblWork.ForeColor = $theme.TextSecondary
+$lblWork.Location = New-Object System.Drawing.Point(0, 54)
+$lblWork.AutoSize = $true
+$pnlFields.Controls.Add($lblWork)
+
+$txtWork = New-Object System.Windows.Forms.TextBox
+$txtWork.Font = $fonts.Body
+$txtWork.Text = Join-Path $toolRoot 'work'
+$txtWork.Location = New-Object System.Drawing.Point(0, 74)
+$txtWork.Size = New-Object System.Drawing.Size(785, 24)
+$pnlFields.Controls.Add($txtWork)
+
+$btnBrowseWork = New-Object System.Windows.Forms.Button
+$btnBrowseWork.Text = "Browse..."
+$btnBrowseWork.UseMnemonic = $false
+$btnBrowseWork.Font = $fonts.Body
+$btnBrowseWork.Location = New-Object System.Drawing.Point(795, 72)
+$btnBrowseWork.Size = New-Object System.Drawing.Size(100, 27)
+$btnBrowseWork.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+$btnBrowseWork.BackColor = $theme.BtnSecondaryBg
+$btnBrowseWork.ForeColor = $theme.BtnSecondaryFg
+$pnlFields.Controls.Add($btnBrowseWork)
+
+# Row 3: The 3 Selectors side-by-side (Build Profile, Target Edition, Hardware Profile)
+# Column 1: Build Profile
 $lblProfile = New-Object System.Windows.Forms.Label
 $lblProfile.Text = "Build Profile"
 $lblProfile.Font = $fonts.Small
 $lblProfile.ForeColor = $theme.TextSecondary
-$lblProfile.Location = New-Object System.Drawing.Point(0, 56)
+$lblProfile.Location = New-Object System.Drawing.Point(0, 108)
 $lblProfile.AutoSize = $true
 $pnlFields.Controls.Add($lblProfile)
 
 $cmbProfile = New-Object System.Windows.Forms.ComboBox
 $cmbProfile.DropDownStyle = 'DropDownList'
 $cmbProfile.Font = $fonts.Body
-$cmbProfile.Location = New-Object System.Drawing.Point(0, 76)
+$cmbProfile.Location = New-Object System.Drawing.Point(0, 128)
 $cmbProfile.Size = New-Object System.Drawing.Size(260, 24)
 $pnlFields.Controls.Add($cmbProfile)
 
 $lblProfileDetails = New-Object System.Windows.Forms.Label
 $lblProfileDetails.Font = $fonts.Small
 $lblProfileDetails.ForeColor = $theme.TextSecondary
-$lblProfileDetails.Location = New-Object System.Drawing.Point(268, 79)
+$lblProfileDetails.Location = New-Object System.Drawing.Point(0, 155)
 $lblProfileDetails.AutoSize = $true
 $pnlFields.Controls.Add($lblProfileDetails)
 
+# Column 2: Target Edition
 $lblEdition = New-Object System.Windows.Forms.Label
 $lblEdition.Text = "Target Edition"
 $lblEdition.Font = $fonts.Small
 $lblEdition.ForeColor = $theme.TextSecondary
-$lblEdition.Location = New-Object System.Drawing.Point(440, 56)
+$lblEdition.Location = New-Object System.Drawing.Point(300, 108)
 $lblEdition.AutoSize = $true
 $pnlFields.Controls.Add($lblEdition)
 
 $cmbEdition = New-Object System.Windows.Forms.ComboBox
 $cmbEdition.DropDownStyle = 'DropDownList'
 $cmbEdition.Font = $fonts.Body
-$cmbEdition.Location = New-Object System.Drawing.Point(440, 76)
+$cmbEdition.Location = New-Object System.Drawing.Point(300, 128)
 $cmbEdition.Size = New-Object System.Drawing.Size(260, 24)
 [void]$cmbEdition.Items.Add("Auto-detect (Single Edition)")
 for ($idx = 1; $idx -le 11; $idx++) {
@@ -336,20 +361,20 @@ for ($idx = 1; $idx -le 11; $idx++) {
 $cmbEdition.SelectedIndex = 0
 $pnlFields.Controls.Add($cmbEdition)
 
-# Row 3: Target Hardware & Staging Workspace
+# Column 3: Hardware Profile
 $lblHardware = New-Object System.Windows.Forms.Label
 $lblHardware.Text = "Hardware Profile"
 $lblHardware.Font = $fonts.Small
 $lblHardware.ForeColor = $theme.TextSecondary
-$lblHardware.Location = New-Object System.Drawing.Point(0, 112)
+$lblHardware.Location = New-Object System.Drawing.Point(600, 108)
 $lblHardware.AutoSize = $true
 $pnlFields.Controls.Add($lblHardware)
 
 $cmbHardware = New-Object System.Windows.Forms.ComboBox
 $cmbHardware.DropDownStyle = 'DropDownList'
 $cmbHardware.Font = $fonts.Body
-$cmbHardware.Location = New-Object System.Drawing.Point(0, 132)
-$cmbHardware.Size = New-Object System.Drawing.Size(260, 24)
+$cmbHardware.Location = New-Object System.Drawing.Point(600, 128)
+$cmbHardware.Size = New-Object System.Drawing.Size(295, 24)
 [void]$cmbHardware.Items.Add("Live Host (CIM Auto-Detect)")
 $specsDir = Join-Path $toolRoot 'specs'
 if (Test-Path -LiteralPath $specsDir) {
@@ -360,32 +385,6 @@ if (Test-Path -LiteralPath $specsDir) {
 }
 $cmbHardware.SelectedIndex = 0
 $pnlFields.Controls.Add($cmbHardware)
-
-$lblWork = New-Object System.Windows.Forms.Label
-$lblWork.Text = "Staging Workspace"
-$lblWork.Font = $fonts.Small
-$lblWork.ForeColor = $theme.TextSecondary
-$lblWork.Location = New-Object System.Drawing.Point(290, 112)
-$lblWork.AutoSize = $true
-$pnlFields.Controls.Add($lblWork)
-
-$txtWork = New-Object System.Windows.Forms.TextBox
-$txtWork.Font = $fonts.Body
-$txtWork.Text = Join-Path $toolRoot 'work'
-$txtWork.Location = New-Object System.Drawing.Point(290, 132)
-$txtWork.Size = New-Object System.Drawing.Size(495, 24)
-$pnlFields.Controls.Add($txtWork)
-
-$btnBrowseWork = New-Object System.Windows.Forms.Button
-$btnBrowseWork.Text = "Browse..."
-$btnBrowseWork.UseMnemonic = $false
-$btnBrowseWork.Font = $fonts.Body
-$btnBrowseWork.Location = New-Object System.Drawing.Point(795, 130)
-$btnBrowseWork.Size = New-Object System.Drawing.Size(100, 27)
-$btnBrowseWork.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
-$btnBrowseWork.BackColor = $theme.BtnSecondaryBg
-$btnBrowseWork.ForeColor = $theme.BtnSecondaryFg
-$pnlFields.Controls.Add($btnBrowseWork)
 
 # Options & Safety Controls (Clean, inline, no enclosing box)
 $pnlOptions = New-Object System.Windows.Forms.Panel
@@ -519,7 +518,7 @@ $lblActHdr.Text = "Activity & Diagnostics"
 $lblActHdr.UseMnemonic = $false
 $lblActHdr.Font = $fonts.SectionHdr
 $lblActHdr.ForeColor = $theme.TextPrimary
-$lblActHdr.Location = New-Object System.Drawing.Point(24, 378)
+$lblActHdr.Location = New-Object System.Drawing.Point(24, 376)
 $lblActHdr.AutoSize = $true
 $tabStudio.Controls.Add($lblActHdr)
 
@@ -527,7 +526,7 @@ $lblStatus = New-Object System.Windows.Forms.Label
 $lblStatus.Text = "Status: Idle - configure inputs and choose Preview Plan or Start Build"
 $lblStatus.Font = $fonts.Small
 $lblStatus.ForeColor = $theme.TextSecondary
-$lblStatus.Location = New-Object System.Drawing.Point(200, 381)
+$lblStatus.Location = New-Object System.Drawing.Point(200, 379)
 $lblStatus.AutoSize = $true
 $tabStudio.Controls.Add($lblStatus)
 
@@ -535,13 +534,13 @@ $lblElapsed = New-Object System.Windows.Forms.Label
 $lblElapsed.Text = "Elapsed: 00:00"
 $lblElapsed.Font = $fonts.Small
 $lblElapsed.ForeColor = $theme.TextSecondary
-$lblElapsed.Location = New-Object System.Drawing.Point(820, 381)
+$lblElapsed.Location = New-Object System.Drawing.Point(820, 379)
 $lblElapsed.AutoSize = $true
 $tabStudio.Controls.Add($lblElapsed)
 
 # Progress Bar (Slim, 4px)
 $progressBar = New-Object System.Windows.Forms.ProgressBar
-$progressBar.Location = New-Object System.Drawing.Point(24, 404)
+$progressBar.Location = New-Object System.Drawing.Point(24, 402)
 $progressBar.Size = New-Object System.Drawing.Size(896, 4)
 $tabStudio.Controls.Add($progressBar)
 
@@ -553,8 +552,8 @@ $txtLog.ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
 $txtLog.Font = $fonts.Console
 $txtLog.BackColor = $theme.TerminalBg
 $txtLog.ForeColor = $theme.TerminalFg
-$txtLog.Location = New-Object System.Drawing.Point(24, 414)
-$txtLog.Size = New-Object System.Drawing.Size(896, 280)
+$txtLog.Location = New-Object System.Drawing.Point(24, 412)
+$txtLog.Size = New-Object System.Drawing.Size(896, 310)
 $txtLog.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
 $tabStudio.Controls.Add($txtLog)
 

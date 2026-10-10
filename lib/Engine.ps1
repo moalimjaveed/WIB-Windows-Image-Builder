@@ -2209,6 +2209,9 @@ function Invoke-WibBuild {
                 }
                 try {
                     $legacyCps = ConvertFrom-Json -InputObject $rawCp -ErrorAction Stop
+                    if ($null -eq $legacyCps -and ($rawCp.Trim() -replace '\s+', '') -eq '[]') {
+                        $legacyCps = @()
+                    }
                     if ($null -eq $legacyCps) { throw "checkpoints ledger '$cpFile' parsed as null." }
                 } catch {
                     if ($_.Exception.Message -like '*Cannot resume:*') { throw }
@@ -2225,6 +2228,9 @@ function Invoke-WibBuild {
                 }
                 try {
                     $legacyJournal = ConvertFrom-Json -InputObject $rawJp -ErrorAction Stop
+                    if ($null -eq $legacyJournal -and ($rawJp.Trim() -replace '\s+', '') -eq '[]') {
+                        $legacyJournal = @()
+                    }
                     if ($null -eq $legacyJournal) { throw "journal ledger '$jp' parsed as null." }
                 } catch {
                     if ($_.Exception.Message -like '*Cannot resume:*') { throw }

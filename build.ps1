@@ -55,6 +55,58 @@ if ($Gui) {
     }
 }
 
+if ($PSBoundParameters.Count -eq 0) {
+    Write-Host ""
+    Write-Host "================================================================================" -ForegroundColor Cyan
+    Write-Host "  WIB: Windows Image Builder (v0.2.29)" -ForegroundColor White
+    Write-Host "  Hardware-adaptive, verifiable Windows 11 offline servicing engine" -ForegroundColor Gray
+    Write-Host "================================================================================" -ForegroundColor Cyan
+    Write-Host ""
+    $isAdminSession = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    if ($isAdminSession) {
+        Write-Host "  Session:    " -NoNewline; Write-Host "Elevated (Administrator Servicing Active)" -ForegroundColor Green
+    } else {
+        Write-Host "  Session:    " -NoNewline; Write-Host "Standard User (Preview & Validation Mode)" -ForegroundColor Yellow
+    }
+    
+    $profiles = @()
+    $profDir = Join-Path $toolRoot 'profiles'
+    if (Test-Path -LiteralPath $profDir) {
+        $profiles = Get-ChildItem -LiteralPath $profDir -Filter '*.json' | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_.Name) }
+    }
+    if ($profiles.Count -gt 0) {
+        Write-Host "  Profiles:   " -NoNewline; Write-Host ($profiles -join ', ') -ForegroundColor White
+    }
+    Write-Host ""
+    Write-Host "  QUICK START / CLI USAGE:" -ForegroundColor Cyan
+    Write-Host "  1. Launch Desktop GUI:     " -NoNewline; Write-Host ".\build.ps1 -Gui" -ForegroundColor Yellow; Write-Host "                             (or .\tools\launch-gui.ps1)" -ForegroundColor DarkGray
+    Write-Host "  2. Validate a Profile:     " -NoNewline; Write-Host ".\build.ps1 -Command validate -ProfileName balanced" -ForegroundColor Yellow
+    Write-Host "  3. List Registered Modules:" -NoNewline; Write-Host ".\build.ps1 -Command list" -ForegroundColor Yellow
+    Write-Host "  4. Preview Execution Plan: " -NoNewline; Write-Host ".\build.ps1 -IsoPath `"D:\Win11.iso`" -Command plan" -ForegroundColor Yellow
+    Write-Host "  5. Execute Full Build:     " -NoNewline; Write-Host ".\build.ps1 -IsoPath `"D:\Win11.iso`" -ProfileName balanced" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "--------------------------------------------------------------------------------" -ForegroundColor DarkGray
+
+    if (-not [Console]::IsInputRedirected) {
+        Write-Host "  Options: [G] Launch WIB Studio GUI | [V] Validate Profile | [L] List Modules | [Enter] Exit" -ForegroundColor White
+        $choice = Read-Host "  Select an option"
+        if ($choice -match '^[gG]') {
+            $builderGui = Join-Path $toolRoot 'tools\WibBuilderGui.ps1'
+            if (Test-Path -LiteralPath $builderGui) {
+                & $builderGui
+            }
+            return
+        } elseif ($choice -match '^[vV]') {
+            & $PSCommandPath -Command validate -ProfileName balanced
+            return
+        } elseif ($choice -match '^[lL]') {
+            & $PSCommandPath -Command list
+            return
+        }
+    }
+    return
+}
+
 . (Join-Path $toolRoot 'lib\Core.ps1')
 . (Join-Path $toolRoot 'lib\Planner.ps1')
 . (Join-Path $toolRoot 'lib\Report.ps1')
@@ -114,6 +166,13 @@ if ($Command -eq 'repatch') {
 # Commands beyond this point (build, plan, verify) require Administrator privileges
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $isAdmin) {
+    Write-Host ""
+    Write-Host "[WIB ERROR] Command '$Command' requires administrator privileges." -ForegroundColor Red
+    Write-Host "Start Windows PowerShell using 'Run as Administrator', or run in preview mode:" -ForegroundColor Yellow
+    Write-Host "  - To launch GUI in Preview Mode: .\build.ps1 -Gui" -ForegroundColor White
+    Write-Host "  - To validate profiles:          .\build.ps1 -Command validate -ProfileName $ProfileName" -ForegroundColor White
+    Write-Host "  - To list all modules:           .\build.ps1 -Command list" -ForegroundColor White
+    Write-Host ""
     throw "Command '$Command' requires administrator privileges. Start Windows PowerShell by using the Run as Administrator option."
 }
 
