@@ -59,7 +59,7 @@ try {
 
     # Step 1: Capture tiny WIM with New-WindowsImage
     Write-Host "[1/6] Capturing tiny scratch WIM with New-WindowsImage..." -ForegroundColor Cyan
-    New-WindowsImage -CapturePath $captureDir -ImagePath $wimPath -Name 'WibIntegrationBase' -Description 'Scratch image for checkpoint integration test' -ErrorAction Stop | Out-Null
+    New-WindowsImage -CapturePath $captureDir -ImagePath $wimPath -Name 'WibIntegrationBase' -Description 'Scratch image for checkpoint integration test' -CheckIntegrity -ErrorAction Stop | Out-Null
     
     $initialImages = @(Get-WindowsImage -ImagePath $wimPath)
     if ($initialImages.Count -ne 1) {
@@ -70,7 +70,7 @@ try {
 
     # Step 2: Mount WIM index 1
     Write-Host "[2/6] Mounting WIM index 1 to $mountDir..." -ForegroundColor Cyan
-    Mount-WindowsImage -ImagePath $wimPath -Index 1 -Path $mountDir -ErrorAction Stop | Out-Null
+    Mount-WindowsImage -ImagePath $wimPath -Index 1 -Path $mountDir -CheckIntegrity -ErrorAction Stop | Out-Null
     
     $mounted = @(Get-WindowsImage -Mounted | Where-Object { $_.Path -eq $mountDir -and $_.MountStatus -eq 'Ok' })
     if ($mounted.Count -eq 0) {
@@ -93,6 +93,7 @@ try {
         Journal             = New-Object System.Collections.ArrayList
     }
     Write-Host "[3/6] Creating baseline checkpoint via New-WibCheckpoint..." -ForegroundColor Cyan
+    Set-Content -LiteralPath (Join-Path $mountDir 'baseline.txt') -Value 'Initial image baseline content with checkpoint 1 marker'
     $cp1 = New-WibCheckpoint -Ctx $ctx -StageName 'stage-baseline'
     $wimAfterCp1 = @(Get-WindowsImage -ImagePath $wimPath)
     $wimCp1Sha = Get-WibSha256 $wimPath
@@ -271,7 +272,7 @@ try {
 
     New-Item -ItemType Directory -Force -Path $procCaptureDir, $procMountDir, $procSourcesDir | Out-Null
     Set-Content -LiteralPath (Join-Path $procCaptureDir 'baseline.txt') -Value 'Process 1 baseline content'
-    New-WindowsImage -CapturePath $procCaptureDir -ImagePath $procWim -Name 'WibProcessBase' -Description 'Out of process resume test image' -ErrorAction Stop | Out-Null
+    New-WindowsImage -CapturePath $procCaptureDir -ImagePath $procWim -Name 'WibProcessBase' -Description 'Out of process resume test image' -CheckIntegrity -ErrorAction Stop | Out-Null
 
     # Create minimal valid test profile
     $oopProfilePath = Join-Path $testRoot 'oop-profile.json'
@@ -303,7 +304,7 @@ try {
 `$workspaceLock = Lock-WibWorkspace -WorkDir `$workDir -RunId 'PROC1_CRASH'
 Write-Host 'Process 1: Workspace lock acquired.'
 
-Mount-WindowsImage -ImagePath `$wim -Index 1 -Path `$mountDir -ErrorAction Stop | Out-Null
+Mount-WindowsImage -ImagePath `$wim -Index 1 -Path `$mountDir -CheckIntegrity -ErrorAction Stop | Out-Null
 `$baseSha = Get-WibSha256 `$wim
 Set-Content -LiteralPath (Join-Path `$workDir 'source.wim.sha256') -Value `$baseSha -Encoding ASCII
 Set-Content -LiteralPath (Join-Path `$workDir 'source.index') -Value '1' -Encoding ASCII
@@ -323,6 +324,7 @@ Set-Content -LiteralPath (Join-Path `$workDir 'source.index') -Value '1' -Encodi
     Journal                 = New-Object System.Collections.ArrayList
 }
 # Checkpoint 1
+Set-Content -LiteralPath (Join-Path `$mountDir 'proc1_base.txt') -Value 'Base file created in Process 1'
 `$cp1 = New-WibCheckpoint -Ctx `$ctx -StageName 'apply-files'
 Set-Content -LiteralPath (Join-Path `$mountDir 'proc1_milestone.txt') -Value 'Created in Process 1'
 # Checkpoint 2
@@ -392,6 +394,16 @@ Stop-Process -Id `$PID -Force
     Write-Host "`n=================================================================" -ForegroundColor Green
     Write-Host "  INTEGRATION TEST PASSED: REAL DISM RESUME & ROLLBACK PROVEN    " -ForegroundColor Green
     Write-Host "=================================================================`n" -ForegroundColor Green
+}
+catch {
+    Write-Host "`n[ERROR] Integration test failed: $($_.Exception.ToString())" -ForegroundColor Red
+    $dismLog = 'C:\Windows\Logs\DISM\dism.log'
+    if (Test-Path -LiteralPath $dismLog) {
+        Write-Host "`n=== LAST 60 LINES OF DISM.LOG ===" -ForegroundColor Yellow
+        Get-Content -LiteralPath $dismLog -Tail 60 | ForEach-Object { Write-Host $_ }
+        Write-Host "=== END DISM.LOG ===`n" -ForegroundColor Yellow
+    }
+    throw
 }
 finally {
     # Ensure clean dismount and cleanup of scratch files
