@@ -60,7 +60,10 @@ function Resolve-WibOscdimg {
     # Known good Microsoft oscdimg.exe SHA-256 hashes
     $knownHashes = @(
         '35C4E5CA92C44D4AE62ED11D15694C7BD212574A92AC0BEACD4A27BEA0D45366',
-        '9D8A2750F3EDBC926943C53C471321FF5D040713DBBCFFBD2DCBA4017EE28DF4'
+        '9D8A2750F3EDBC926943C53C471321FF5D040713DBBCFFBD2DCBA4017EE28DF4',
+        'D2709F8099DDD202BC41BCB399ECD5638503C6466F416D1A321769AF83A70C3A',
+        'B99CF18DE8006F7BEC5B9618EAC6D2F4BA9F1700ADC78A2BC49433B55629C93B',
+        '175E8899C9925C0A91289FA8294D6969EEB88A7C753B3B9001CD63A3B3D9A8F4'
     )
 
     $sigProvider = if ($script:WibAllowNativeToolMocks -and $script:WibMockAuthenticodeSignatureProvider -is [scriptblock]) {
@@ -90,6 +93,12 @@ function Resolve-WibOscdimg {
 
         if (Test-Path -LiteralPath $adk -PathType Leaf) { $candidate = $adk }
         elseif (Test-Path -LiteralPath $adk64 -PathType Leaf) { $candidate = $adk64 }
+        elseif ($WorkDir -and (Test-Path -LiteralPath (Join-Path $WorkDir 'oscdimg.exe') -PathType Leaf)) {
+            $candidate = Join-Path $WorkDir 'oscdimg.exe'
+        }
+        elseif ($WorkDir -and (Test-Path -LiteralPath (Join-Path $WorkDir 'tools\oscdimg.exe') -PathType Leaf)) {
+            $candidate = Join-Path $WorkDir 'tools\oscdimg.exe'
+        }
         else {
             $pathCmd = Get-Command 'oscdimg.exe' -ErrorAction SilentlyContinue
             if ($pathCmd -and (Test-Path -LiteralPath $pathCmd.Source -PathType Leaf)) {
@@ -129,9 +138,31 @@ function Resolve-WibOscdimg {
     }
     $dest = Join-Path $WorkDir 'oscdimg.exe'
     if (-not (Test-Path -LiteralPath $dest -PathType Leaf)) {
-        Write-WibLog "Downloading oscdimg.exe from Microsoft symbol server (arch: $arch)..." 'WARN'
-        $downloadUrl = 'https://msdl.microsoft.com/download/symbols/oscdimg.exe/3D44737265000/oscdimg.exe'
-        Invoke-WebRequest -Uri $downloadUrl -OutFile $dest -UseBasicParsing -UserAgent 'Microsoft-Symbol-Server/10.0.0.0'
+        Write-WibLog "Downloading signed oscdimg from Microsoft ADK CDN (arch: $arch)..." 'WARN'
+        $cabMap = @{
+            'amd64' = @{ Cab = 'bbf55224a0290f00676ddc410f004498.cab'; File = 'fild40c79d789d460e48dc1cbd485d6fc2e' }
+            'arm64' = @{ Cab = '9d2b092478d6cca70d5ac957368c00ba.cab'; File = 'filb3742d71928e52cc44a3f06ecca9f1c3' }
+            'x86'   = @{ Cab = '5d984200acbde182fd99cbfbe9bad133.cab'; File = 'fil720cc132fbb53f3bed2e525eb77bdbc1' }
+        }
+        $payloadInfo = $cabMap[$arch]
+        if ($null -eq $payloadInfo) { $payloadInfo = $cabMap['amd64'] }
+        $cabUrl = 'https://download.microsoft.com/download/8e0c0f5a-abb5-4358-a51b-168eb40b1590/adk/Installers/' + $payloadInfo.Cab
+        $tempCab = Join-Path $env:TEMP ("wib-oscdimg-{0}.cab" -f [guid]::NewGuid().ToString('N'))
+        $tempExtract = Join-Path $env:TEMP ("wib-oscdimg-ext-{0}" -f [guid]::NewGuid().ToString('N'))
+        try {
+            Invoke-WebRequest -Uri $cabUrl -OutFile $tempCab -UseBasicParsing
+            if (-not (Test-Path -LiteralPath $tempExtract)) { New-Item -ItemType Directory -Path $tempExtract | Out-Null }
+            $expandProc = Start-Process -FilePath "$env:SystemRoot\System32\expand.exe" -ArgumentList @($tempCab, '-F:*', $tempExtract) -NoNewWindow -Wait -PassThru
+            if ($expandProc.ExitCode -ne 0) { throw "expand.exe failed with exit code $($expandProc.ExitCode)" }
+            $extractedFile = Join-Path $tempExtract $payloadInfo.File
+            if (-not (Test-Path -LiteralPath $extractedFile -PathType Leaf)) {
+                throw "Expected payload '$($payloadInfo.File)' not found in extracted ADK cab."
+            }
+            Copy-Item -LiteralPath $extractedFile -Destination $dest -Force
+        } finally {
+            if (Test-Path -LiteralPath $tempCab) { Remove-Item -LiteralPath $tempCab -Force -ErrorAction SilentlyContinue }
+            if (Test-Path -LiteralPath $tempExtract) { Remove-Item -LiteralPath $tempExtract -Recurse -Force -ErrorAction SilentlyContinue }
+        }
     }
 
     $sig = if ($null -ne $sigProvider) {
