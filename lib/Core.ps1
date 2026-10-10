@@ -7,8 +7,9 @@ if ($PSVersionTable.PSVersion.Major -ge 6) {
     $null = Update-TypeData -TypeName System.IO.FileInfo -MemberType ScriptMethod -MemberName GetAccessControl -Value {
         param($sections = ([System.Security.AccessControl.AccessControlSections]::Access -bor [System.Security.AccessControl.AccessControlSections]::Owner))
         try {
+            $raw = if ($null -ne $this.PSObject) { $this.PSObject.BaseObject } else { $this }
             $m = ([type]'System.IO.FileSystemAclExtensions').GetMethod('GetAccessControl', [type[]]@([System.IO.FileInfo], [System.Security.AccessControl.AccessControlSections]))
-            return $m.Invoke($null, @($this, [System.Security.AccessControl.AccessControlSections]$sections))
+            return $m.Invoke($null, @($raw, [System.Security.AccessControl.AccessControlSections]$sections))
         } catch {
             return (Get-Acl -LiteralPath $this.FullName)
         }
@@ -17,8 +18,10 @@ if ($PSVersionTable.PSVersion.Major -ge 6) {
     $null = Update-TypeData -TypeName System.IO.FileInfo -MemberType ScriptMethod -MemberName SetAccessControl -Value {
         param($acl)
         try {
+            $raw = if ($null -ne $this.PSObject) { $this.PSObject.BaseObject } else { $this }
+            $rawAcl = if ($null -ne $acl -and $null -ne $acl.PSObject) { $acl.PSObject.BaseObject } else { $acl }
             $m = ([type]'System.IO.FileSystemAclExtensions').GetMethod('SetAccessControl', [type[]]@([System.IO.FileInfo], [System.Security.AccessControl.FileSecurity]))
-            [void]$m.Invoke($null, @($this, $acl))
+            [void]$m.Invoke($null, @($raw, $rawAcl))
         } catch {
             Set-Acl -LiteralPath $this.FullName -AclObject $acl
         }
@@ -27,8 +30,9 @@ if ($PSVersionTable.PSVersion.Major -ge 6) {
     $null = Update-TypeData -TypeName System.IO.DirectoryInfo -MemberType ScriptMethod -MemberName GetAccessControl -Value {
         param($sections = ([System.Security.AccessControl.AccessControlSections]::Access -bor [System.Security.AccessControl.AccessControlSections]::Owner))
         try {
+            $raw = if ($null -ne $this.PSObject) { $this.PSObject.BaseObject } else { $this }
             $m = ([type]'System.IO.FileSystemAclExtensions').GetMethod('GetAccessControl', [type[]]@([System.IO.DirectoryInfo], [System.Security.AccessControl.AccessControlSections]))
-            return $m.Invoke($null, @($this, [System.Security.AccessControl.AccessControlSections]$sections))
+            return $m.Invoke($null, @($raw, [System.Security.AccessControl.AccessControlSections]$sections))
         } catch {
             return (Get-Acl -LiteralPath $this.FullName)
         }
@@ -37,22 +41,27 @@ if ($PSVersionTable.PSVersion.Major -ge 6) {
     $null = Update-TypeData -TypeName System.IO.DirectoryInfo -MemberType ScriptMethod -MemberName SetAccessControl -Value {
         param($acl)
         try {
+            $raw = if ($null -ne $this.PSObject) { $this.PSObject.BaseObject } else { $this }
+            $rawAcl = if ($null -ne $acl -and $null -ne $acl.PSObject) { $acl.PSObject.BaseObject } else { $acl }
             $m = ([type]'System.IO.FileSystemAclExtensions').GetMethod('SetAccessControl', [type[]]@([System.IO.DirectoryInfo], [System.Security.AccessControl.DirectorySecurity]))
-            [void]$m.Invoke($null, @($this, $acl))
+            [void]$m.Invoke($null, @($raw, $rawAcl))
         } catch {
             Set-Acl -LiteralPath $this.FullName -AclObject $acl
         }
     } -Force -ErrorAction SilentlyContinue
 
     $null = Update-TypeData -TypeName System.IO.FileStream -MemberType ScriptMethod -MemberName GetAccessControl -Value {
+        $raw = if ($null -ne $this.PSObject) { $this.PSObject.BaseObject } else { $this }
         $m = ([type]'System.IO.FileSystemAclExtensions').GetMethod('GetAccessControl', [type[]]@([System.IO.FileStream]))
-        return $m.Invoke($null, @($this))
+        return $m.Invoke($null, @($raw))
     } -Force -ErrorAction SilentlyContinue
 
     $null = Update-TypeData -TypeName System.IO.FileStream -MemberType ScriptMethod -MemberName SetAccessControl -Value {
         param($acl)
+        $raw = if ($null -ne $this.PSObject) { $this.PSObject.BaseObject } else { $this }
+        $rawAcl = if ($null -ne $acl -and $null -ne $acl.PSObject) { $acl.PSObject.BaseObject } else { $acl }
         $m = ([type]'System.IO.FileSystemAclExtensions').GetMethod('SetAccessControl', [type[]]@([System.IO.FileStream], [System.Security.AccessControl.FileSecurity]))
-        [void]$m.Invoke($null, @($this, $acl))
+        [void]$m.Invoke($null, @($raw, $rawAcl))
     } -Force -ErrorAction SilentlyContinue
 }
 
