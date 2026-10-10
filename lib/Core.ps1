@@ -5,23 +5,45 @@ if ($PSVersionTable.PSVersion.Major -ge 6) {
     # .NET Core / .NET 6+ moved GetAccessControl/SetAccessControl from FileSystemInfo to FileSystemAclExtensions.
     # Expose them as instance ScriptMethods on FileInfo, DirectoryInfo, and FileStream for cross-version parity with PS 5.1.
     $null = Update-TypeData -TypeName System.IO.FileInfo -MemberType ScriptMethod -MemberName GetAccessControl -Value {
-        param($sections = ([System.Security.AccessControl.AccessControlSections]::Access -bor [System.Security.AccessControl.AccessControlSections]::Owner))
-        return ([type]'System.IO.FileSystemAclExtensions')::GetAccessControl($this, $sections)
+        param($sections = $null)
+        try {
+            if ($null -ne $sections) {
+                return ([type]'System.IO.FileSystemAclExtensions')::GetAccessControl($this, [System.Security.AccessControl.AccessControlSections]$sections)
+            }
+            return ([type]'System.IO.FileSystemAclExtensions')::GetAccessControl($this)
+        } catch {
+            return (Get-Acl -LiteralPath $this.FullName)
+        }
     } -Force -ErrorAction SilentlyContinue
 
     $null = Update-TypeData -TypeName System.IO.FileInfo -MemberType ScriptMethod -MemberName SetAccessControl -Value {
         param($acl)
-        [void]([type]'System.IO.FileSystemAclExtensions')::SetAccessControl($this, $acl)
+        try {
+            [void]([type]'System.IO.FileSystemAclExtensions')::SetAccessControl($this, $acl)
+        } catch {
+            Set-Acl -LiteralPath $this.FullName -AclObject $acl
+        }
     } -Force -ErrorAction SilentlyContinue
 
     $null = Update-TypeData -TypeName System.IO.DirectoryInfo -MemberType ScriptMethod -MemberName GetAccessControl -Value {
-        param($sections = ([System.Security.AccessControl.AccessControlSections]::Access -bor [System.Security.AccessControl.AccessControlSections]::Owner))
-        return ([type]'System.IO.FileSystemAclExtensions')::GetAccessControl($this, $sections)
+        param($sections = $null)
+        try {
+            if ($null -ne $sections) {
+                return ([type]'System.IO.FileSystemAclExtensions')::GetAccessControl($this, [System.Security.AccessControl.AccessControlSections]$sections)
+            }
+            return ([type]'System.IO.FileSystemAclExtensions')::GetAccessControl($this)
+        } catch {
+            return (Get-Acl -LiteralPath $this.FullName)
+        }
     } -Force -ErrorAction SilentlyContinue
 
     $null = Update-TypeData -TypeName System.IO.DirectoryInfo -MemberType ScriptMethod -MemberName SetAccessControl -Value {
         param($acl)
-        [void]([type]'System.IO.FileSystemAclExtensions')::SetAccessControl($this, $acl)
+        try {
+            [void]([type]'System.IO.FileSystemAclExtensions')::SetAccessControl($this, $acl)
+        } catch {
+            Set-Acl -LiteralPath $this.FullName -AclObject $acl
+        }
     } -Force -ErrorAction SilentlyContinue
 
     $null = Update-TypeData -TypeName System.IO.FileStream -MemberType ScriptMethod -MemberName GetAccessControl -Value {
