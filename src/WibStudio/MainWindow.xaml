@@ -104,7 +104,7 @@
                                                 <Setter Property="Foreground" Value="#4ADE80" />
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding IsElevated}" Value="False">
-                                                <Setter Property="Symbol" Value="ShieldAlert24" />
+                                                <Setter Property="Symbol" Value="ShieldError24" />
                                                 <Setter Property="Foreground" Value="#F59E0B" />
                                             </DataTrigger>
                                         </Style.Triggers>

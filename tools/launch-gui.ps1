@@ -26,7 +26,12 @@ if ((Test-Path -LiteralPath $studioExe) -and -not $ScreenshotPath) {
         WorkingDirectory = $repoRoot
     }
     if (-not $isAdmin -and -not $NoElevate) {
-        $procParams['Verb'] = 'RunAs'
+        try {
+            Start-Process @procParams -Verb RunAs
+            return
+        } catch {
+            Write-Warning "Elevation request was declined or unavailable. Launching in Preview Mode..."
+        }
     }
     Start-Process @procParams
     return
@@ -39,14 +44,19 @@ if (-not $isAdmin -and -not $NoElevate) {
     if ($PSBoundParameters.ContainsKey('InitialTab') -and $InitialTab -gt 0) {
         $elevateArgs += @('-InitialTab', [string]$InitialTab)
     }
-    Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList $elevateArgs
-} else {
-    # If already elevated or running in preview mode (-NoElevate), invoke directly
-    $splat = @{}
-    if ($NoElevate) { $splat['NoElevate'] = $true }
-    if ($ScreenshotPath) { $splat['ScreenshotPath'] = $ScreenshotPath }
-    if ($CloseAfterScreenshot) { $splat['CloseAfterScreenshot'] = $true }
-    if ($PSBoundParameters.ContainsKey('InitialTab')) { $splat['InitialTab'] = $InitialTab }
-    
-    & $scriptPath @splat
+    try {
+        Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList $elevateArgs
+        return
+    } catch {
+        Write-Warning "Elevation request was declined or unavailable. Launching in Preview Mode..."
+    }
 }
+
+# If already elevated or running in preview mode (-NoElevate), invoke directly
+$splat = @{}
+if ($NoElevate) { $splat['NoElevate'] = $true }
+if ($ScreenshotPath) { $splat['ScreenshotPath'] = $ScreenshotPath }
+if ($CloseAfterScreenshot) { $splat['CloseAfterScreenshot'] = $true }
+if ($PSBoundParameters.ContainsKey('InitialTab')) { $splat['InitialTab'] = $InitialTab }
+
+& $scriptPath @splat
