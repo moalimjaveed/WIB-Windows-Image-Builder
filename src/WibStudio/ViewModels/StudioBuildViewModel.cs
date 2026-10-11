@@ -274,22 +274,53 @@ public partial class StudioBuildViewModel : ObservableObject
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanStartPreviewOrBuild))]
+    [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private async Task PreviewPlanAsync()
     {
+        if (string.IsNullOrWhiteSpace(IsoPath))
+        {
+            LogEntries.Add(new LogEntry
+            {
+                Timestamp = DateTime.Now,
+                Level = LogLevel.Warning,
+                Message = "[GUIDE] Please select your Windows 11 ISO file to preview the execution plan."
+            });
+            BrowseIso();
+            if (string.IsNullOrWhiteSpace(IsoPath))
+            {
+                return;
+            }
+        }
+
         await ExecuteWorkflowAsync(command: "plan", isDryRun: true);
     }
 
-    [RelayCommand(CanExecute = nameof(CanStartPreviewOrBuild))]
+    [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private async Task StartBuildAsync()
     {
+        if (string.IsNullOrWhiteSpace(IsoPath))
+        {
+            LogEntries.Add(new LogEntry
+            {
+                Timestamp = DateTime.Now,
+                Level = LogLevel.Warning,
+                Message = "[GUIDE] Please select your Windows 11 ISO file to begin building."
+            });
+            BrowseIso();
+            if (string.IsNullOrWhiteSpace(IsoPath))
+            {
+                return;
+            }
+        }
+
         bool isElevated = _diagnosticsService.IsElevated();
         if (!isElevated && !IsDryRun)
         {
             var result = MessageBox.Show(
-                "Windows 11 DISM image mounting requires Administrator privileges for live servicing.\n\n" +
-                "Would you like to run in Dry-Run Simulation Mode instead to preview the exact servicing actions safely without elevation?",
-                "Administrator Elevation Notice",
+                "Live Windows 11 image servicing requires Administrator privileges to mount and modify image files.\n\n" +
+                "Would you like to run in Dry-Run Simulation Mode instead to safely preview all planned actions?\n\n" +
+                "(Tip: To build a live ISO, close this and run launch-gui.cmd as Administrator)",
+                "Administrator Servicing Privilege Notice",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Information);
 
@@ -305,8 +336,6 @@ public partial class StudioBuildViewModel : ObservableObject
 
         await ExecuteWorkflowAsync(command: "build", isDryRun: IsDryRun);
     }
-
-    private bool CanStartPreviewOrBuild() => !IsBusy && !string.IsNullOrWhiteSpace(IsoPath);
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private async Task ValidateProfileAsync()
@@ -434,20 +463,20 @@ public partial class StudioBuildViewModel : ObservableObject
         LogEntries.Add(new LogEntry
         {
             Timestamp = DateTime.Now,
-            Level = LogLevel.Info,
-            Message = "Windows Image Builder Studio (WIB Studio) v1.0.0 Ready"
+            Level = LogLevel.Success,
+            Message = "Windows Image Builder Studio (WIB Studio) v0.2.29 Ready"
         });
         LogEntries.Add(new LogEntry
         {
             Timestamp = DateTime.Now,
             Level = LogLevel.Info,
-            Message = $"WIB Engine located at: {WibPathResolver.GetWibRepositoryRoot()}"
+            Message = $"Engine root: {WibPathResolver.GetWibRepositoryRoot()}"
         });
         LogEntries.Add(new LogEntry
         {
             Timestamp = DateTime.Now,
             Level = LogLevel.Info,
-            Message = "Configure source media and profile inputs above, then press 'Preview Plan' or 'Start Build'."
+            Message = "BEGINNER GUIDE: 1. Click 'Browse ISO...' to choose your Windows 11 ISO  •  2. Click 'Start Build' below!"
         });
     }
 

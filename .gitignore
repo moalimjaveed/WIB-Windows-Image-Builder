@@ -25,6 +25,7 @@ build.lock.json
 *.tmp
 *.log
 *.bak
+*.locked.*
 *~
 *.swp
 

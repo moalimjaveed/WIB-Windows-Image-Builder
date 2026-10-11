@@ -14,11 +14,13 @@
         <Grid.RowDefinitions>
             <!-- 0: Preflight Summary Bar -->
             <RowDefinition Height="Auto" />
-            <!-- 1: Configuration Inputs & Toggles Card -->
+            <!-- 1: Quick-Start Beginner Steps Ribbon -->
             <RowDefinition Height="Auto" />
-            <!-- 2: Action Buttons Bar -->
+            <!-- 2: Configuration Inputs & Toggles Card -->
             <RowDefinition Height="Auto" />
-            <!-- 3: Activity & Diagnostics Console (Consumes remaining space) -->
+            <!-- 3: Action Buttons Bar -->
+            <RowDefinition Height="Auto" />
+            <!-- 4: Activity & Diagnostics Console (Consumes remaining space) -->
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -72,8 +74,41 @@
             </Grid>
         </Border>
 
-        <!-- B. Configuration Inputs & C. Options Toggles Card -->
+        <!-- Quick-Start Beginner Steps Ribbon -->
         <Border Grid.Row="1"
+                Style="{StaticResource WibCardStyle}"
+                Background="#0F172A"
+                BorderBrush="#1E293B"
+                Padding="16,8"
+                Margin="0,0,0,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                    <ui:SymbolIcon Symbol="Lightbulb24" Foreground="#38BDF8" Margin="0,0,8,0" />
+                    <TextBlock Text="Quick Start Guide" FontWeight="SemiBold" Foreground="#38BDF8" FontSize="12" VerticalAlignment="Center" />
+                </StackPanel>
+                <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="12" TextWrapping="Wrap">
+                    <Run Text="Step 1:" FontWeight="Bold" Foreground="#38BDF8" />
+                    <Run Text=" Click " Foreground="#94A3B8" />
+                    <Run Text="'Browse ISO...'" FontWeight="SemiBold" Foreground="#F1F5F9" />
+                    <Run Text=" to pick your official Windows 11 ISO  •  " Foreground="#94A3B8" />
+                    <Run Text="Step 2:" FontWeight="Bold" Foreground="#38BDF8" />
+                    <Run Text=" Keep " Foreground="#94A3B8" />
+                    <Run Text="'balanced'" FontWeight="SemiBold" Foreground="#F1F5F9" />
+                    <Run Text=" profile (recommended)  •  " Foreground="#94A3B8" />
+                    <Run Text="Step 3:" FontWeight="Bold" Foreground="#38BDF8" />
+                    <Run Text=" Click " Foreground="#94A3B8" />
+                    <Run Text="'Start Build'" FontWeight="Bold" Foreground="#4ADE80" />
+                    <Run Text=" below!" Foreground="#94A3B8" />
+                </TextBlock>
+            </Grid>
+        </Border>
+
+        <!-- B. Configuration Inputs & C. Options Toggles Card -->
+        <Border Grid.Row="2"
                 Style="{StaticResource WibCardStyle}"
                 Padding="16,14"
                 Margin="0,0,0,10"
@@ -97,12 +132,14 @@
                             </Grid.ColumnDefinitions>
                             <ui:TextBox Grid.Column="0"
                                         Text="{Binding IsoPath, UpdateSourceTrigger=PropertyChanged}"
-                                        PlaceholderText="e.g. C:\ISOs\Win11_24H2_English_x64.iso"
+                                        PlaceholderText="Click 'Browse ISO...' to choose your Windows 11 ISO file"
                                         Margin="0,0,8,0" />
                             <ui:Button Grid.Column="1"
-                                       Content="Browse..."
+                                       Content="Browse ISO..."
                                        Icon="{ui:SymbolIcon Symbol=FolderOpen24}"
-                                       Command="{Binding BrowseIsoCommand}" />
+                                       Command="{Binding BrowseIsoCommand}"
+                                       FontWeight="SemiBold"
+                                       ToolTip="Select your downloaded official Windows 11 ISO file" />
                         </Grid>
                     </StackPanel>
 
@@ -184,18 +221,23 @@
                     <WrapPanel Orientation="Horizontal">
                         <ui:ToggleSwitch Content="Dry-run simulation only"
                                          IsChecked="{Binding IsDryRun}"
+                                         ToolTip="Test the entire servicing pipeline in ~10 seconds without writing changes to disk"
                                          Margin="0,0,24,6" />
                         <ui:ToggleSwitch Content="Resume from checkpoint"
                                          IsChecked="{Binding ResumeFromCheckpoint}"
+                                         ToolTip="Resume an interrupted build from the last completed stage instead of starting over"
                                          Margin="0,0,24,6" />
                         <ui:ToggleSwitch Content="Download signed oscdimg"
                                          IsChecked="{Binding DownloadSignedOscdimg}"
+                                         ToolTip="Automatically download and verify Microsoft's official oscdimg ISO authoring tool if not already present"
                                          Margin="0,0,24,6" />
                         <ui:ToggleSwitch Content="Accept high-risk modules"
                                          IsChecked="{Binding AcceptHighRiskModules}"
+                                         ToolTip="Allow high-risk customizations (such as disabling UAC or Defender). Not recommended for daily PCs."
                                          Margin="0,0,24,6" />
                         <ui:ToggleSwitch Content="Skip ISO hash verification"
                                          IsChecked="{Binding SkipIsoHashVerification}"
+                                         ToolTip="Skip calculating the full SHA-256 hash of the input ISO file (faster dry-run testing)"
                                          Margin="0,0,24,6" />
                     </WrapPanel>
                 </Border>
@@ -203,7 +245,7 @@
         </Border>
 
         <!-- D. Action Buttons Bar -->
-        <Border Grid.Row="2" Margin="0,0,0,10">
+        <Border Grid.Row="3" Margin="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -212,41 +254,48 @@
 
                 <!-- Left Action Cluster -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <!-- Preview Plan -->
-                    <ui:Button Content="Preview Plan"
-                               Icon="{ui:SymbolIcon Symbol=DocumentSearch24}"
-                               Command="{Binding PreviewPlanCommand}"
-                               Margin="0,0,10,0"
-                               Padding="14,8" />
-
-                    <!-- Start Build (Accent) -->
+                    <!-- 1. Start Build (Primary Accent Action - Big & Prominent) -->
                     <ui:Button Content="Start Build"
                                Icon="{ui:SymbolIcon Symbol=Play24}"
                                Appearance="Primary"
                                Command="{Binding StartBuildCommand}"
-                               Margin="0,0,10,0"
-                               Padding="18,8" />
+                               Margin="0,0,12,0"
+                               Padding="24,9"
+                               FontWeight="SemiBold"
+                               FontSize="13"
+                               ToolTip="Start building your customized, bloat-free Windows 11 installation media" />
 
-                    <!-- Validate Profile -->
+                    <!-- 2. Preview Plan (Dry Run) -->
+                    <ui:Button Content="Preview Plan (Dry Run)"
+                               Icon="{ui:SymbolIcon Symbol=DocumentSearch24}"
+                               Command="{Binding PreviewPlanCommand}"
+                               Margin="0,0,10,0"
+                               Padding="16,8"
+                               ToolTip="Simulate the servicing pipeline in ~10 seconds without making changes" />
+
+                    <!-- 3. Validate Profile -->
                     <ui:Button Content="Validate Profile"
                                Icon="{ui:SymbolIcon Symbol=CheckmarkCircle24}"
                                Command="{Binding ValidateProfileCommand}"
                                Margin="0,0,10,0"
-                               Padding="12,8" />
+                               Padding="14,8"
+                               ToolTip="Run schema validation on the selected profile" />
 
-                    <!-- Cancel (Danger) -->
+                    <!-- 4. Cancel (Danger) -->
                     <ui:Button Content="Cancel"
                                Icon="{ui:SymbolIcon Symbol=Stop24}"
                                Appearance="Danger"
                                Command="{Binding CancelCommand}"
                                Margin="0,0,10,0"
-                               Padding="12,8" />
+                               Padding="14,8"
+                               ToolTip="Halt servicing and release sandbox locks" />
 
-                    <!-- Open Reports -->
+                    <!-- 5. Open Reports -->
                     <ui:Button Content="Open Reports"
                                Icon="{ui:SymbolIcon Symbol=Folder24}"
                                Command="{Binding OpenReportsCommand}"
-                               Padding="12,8" />
+                               Padding="14,8"
+                               ToolTip="Open output reports directory (manifest.json, report.html, journal.reg)" />
                 </StackPanel>
 
                 <!-- Right Utility Cluster -->
@@ -255,17 +304,19 @@
                                Icon="{ui:SymbolIcon Symbol=Copy24}"
                                Command="{Binding CopyConsoleCommand}"
                                Margin="0,0,8,0"
-                               Padding="12,8" />
+                               Padding="12,8"
+                               ToolTip="Copy entire console log to clipboard" />
                     <ui:Button Content="Clear"
                                Icon="{ui:SymbolIcon Symbol=Delete24}"
                                Command="{Binding ClearConsoleCommand}"
-                               Padding="12,8" />
+                               Padding="12,8"
+                               ToolTip="Clear console output" />
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- E. Activity & Diagnostics Console (Takes 100% remaining space) -->
-        <Border Grid.Row="3"
+        <Border Grid.Row="4"
                 Background="{StaticResource WibTerminalBg}"
                 BorderBrush="{StaticResource WibTerminalBorder}"
                 BorderThickness="1"
