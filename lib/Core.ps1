@@ -3233,7 +3233,10 @@ function Test-WibPathContainment {
                 }
                 $item = Get-Item -LiteralPath $probe -Force -ErrorAction SilentlyContinue
                 if ($item -and [bool]($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
-                    throw "Reparse point violation: Path '$probe' is an NTFS junction or symbolic link. Reparse points are forbidden within confined paths to prevent filesystem redirection attacks."
+                    $isDir = [bool]($item.Attributes -band [System.IO.FileAttributes]::Directory)
+                    if ($isDir -or ($probe -ine $targetPath)) {
+                        throw "Reparse point violation: Path '$probe' is an NTFS junction or symbolic link. Reparse points are forbidden within confined paths to prevent filesystem redirection attacks."
+                    }
                 }
             }
             $parent = Split-Path -Parent $probe
@@ -3274,7 +3277,8 @@ function Assert-WibNoReparsePointsInTree {
     $resolvedTarget = Test-WibPathContainment -Path $Path -BaseDir $BaseDir
     if (Test-Path -LiteralPath $resolvedTarget) {
         $rootItem = Get-Item -LiteralPath $resolvedTarget -Force -ErrorAction Stop
-        if ([bool]($rootItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+        if ([bool]($rootItem.Attributes -band [System.IO.FileAttributes]::Directory) -and
+            [bool]($rootItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
             throw "Reparse point violation: Path '$resolvedTarget' is an NTFS junction or symbolic link."
         }
         if ($rootItem -is [System.IO.DirectoryInfo]) {
@@ -3283,7 +3287,8 @@ function Assert-WibNoReparsePointsInTree {
             while ($stack.Count -gt 0) {
                 $currentDir = [System.IO.DirectoryInfo]$stack.Pop()
                 foreach ($fsi in $currentDir.GetFileSystemInfos()) {
-                    if ([bool]($fsi.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+                    if ([bool]($fsi.Attributes -band [System.IO.FileAttributes]::Directory) -and
+                        [bool]($fsi.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
                         throw "Reparse point violation: Descendant path '$($fsi.FullName)' inside '$resolvedTarget' is an NTFS junction or symbolic link. Reparse points are forbidden within confined trees."
                     }
                     if ($fsi -is [System.IO.DirectoryInfo]) {
@@ -3847,13 +3852,14 @@ function Remove-WibConfinedTreeSafe {
     if (-not (Test-Path -LiteralPath $resolvedRoot)) { return }
 
     $rootItem = Get-Item -LiteralPath $resolvedRoot -Force -ErrorAction Stop
-    if ([bool]($rootItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+    if ([bool]($rootItem.Attributes -band [System.IO.FileAttributes]::Directory) -and
+        [bool]($rootItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
         throw "Reparse point violation: Root path '$resolvedRoot' is an NTFS junction or symbolic link."
     }
 
     if ($rootItem -isnot [System.IO.DirectoryInfo]) {
         $expectedFileId = Get-WibKernelNodeIdentity -LiteralPath $resolvedRoot
-        if (-not $expectedFileId -or $expectedFileId.StartsWith('REPARSE:')) {
+        if (-not $expectedFileId) {
             throw "Reparse point or identity violation on leaf '$resolvedRoot' ($expectedFileId)."
         }
         if ($OnBeforeNodeDelete) { & $OnBeforeNodeDelete $resolvedRoot 'File' }
@@ -3883,17 +3889,21 @@ function Remove-WibConfinedTreeSafe {
         [void]$dirNodes.Add(@{ Path = $dirFull; ExpectedId = $dirId })
 
         foreach ($fsi in $currDir.GetFileSystemInfos()) {
-            if ([bool]($fsi.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+            $isSubDir = ($fsi -is [System.IO.DirectoryInfo])
+            if ($isSubDir -and [bool]($fsi.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
                 throw "Reparse point violation: Descendant path '$($fsi.FullName)' inside '$resolvedRoot' is an NTFS junction or symbolic link."
             }
             $nodeFull = $fsi.FullName
             $nodeId = Get-WibKernelNodeIdentity -LiteralPath $nodeFull
-            if (-not $nodeId -or $nodeId.StartsWith('REPARSE:')) {
-                throw "Reparse point or kernel identity violation during enumeration of '$nodeFull' ($nodeId)."
-            }
-            if ($fsi -is [System.IO.DirectoryInfo]) {
+            if ($isSubDir) {
+                if (-not $nodeId -or $nodeId.StartsWith('REPARSE:')) {
+                    throw "Reparse point or kernel identity violation during enumeration of '$nodeFull' ($nodeId)."
+                }
                 $walkStack.Push($fsi)
             } else {
+                if (-not $nodeId) {
+                    throw "Reparse point or kernel identity violation during enumeration of '$nodeFull' ($nodeId)."
+                }
                 [void]$fileNodes.Add(@{ Path = $nodeFull; ExpectedId = $nodeId })
             }
         }
@@ -3909,8 +3919,8 @@ function Remove-WibConfinedTreeSafe {
             throw "TOCTOU node identity mismatch before deleting file '$fPath': expected '$($fNode.ExpectedId)', found '$currId'. Aborting deletion."
         }
         $fItem = Get-Item -LiteralPath $fPath -Force -ErrorAction Stop
-        if ([bool]($fItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
-            throw "TOCTOU reparse point detected before deleting file '$fPath'."
+        if ([bool]($fItem.Attributes -band [System.IO.FileAttributes]::Directory)) {
+            throw "TOCTOU directory swap detected before deleting file '$fPath'."
         }
         if ([bool]($fItem.Attributes -band [System.IO.FileAttributes]::ReadOnly)) {
             $fItem.Attributes = $fItem.Attributes -band (-bnot [System.IO.FileAttributes]::ReadOnly)
