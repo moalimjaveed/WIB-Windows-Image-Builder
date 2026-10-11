@@ -6996,10 +6996,20 @@ Publish-WibOutputIso -TempIsoPath '$($childTempB.Replace("'", "''"))' -OutputIso
     Remove-Item -LiteralPath $ay4Work -Recurse -Force -ErrorAction SilentlyContinue
     Remove-Item -LiteralPath $ay4eWork -Recurse -Force -ErrorAction SilentlyContinue
     Assert ($ay4eThrew -and ($ay4eErrMsg -match 'is not in the approved Microsoft known-hashes allowlist')) 'AY-4e: Resolve-WibOscdimg download cache branch validates signature and enforces strict allowlist'
+
+    # AZ-1a: Remove-WibRegistryKey recursively deletes nested keys and leaves path absent
+    $az1Key = 'HKCU:\Software\WibTestAz1Key\Sub1\Sub2'
+    $null = New-Item -Path $az1Key -Force
+    $null = New-ItemProperty -LiteralPath $az1Key -Name 'Val' -Value 1 -PropertyType DWord -Force
+    $az1Created = Test-Path -LiteralPath $az1Key
+    Remove-WibRegistryKey -LiteralPath 'HKCU:\Software\WibTestAz1Key'
+    $az1Gone = -not (Test-Path -LiteralPath 'HKCU:\Software\WibTestAz1Key')
+    Assert ($az1Created -and $az1Gone) 'AZ-1a: Remove-WibRegistryKey recursively deletes nested registry keys'
     }
 }
 finally {
     Remove-Item Function:\Get-WindowsImage -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath 'HKCU:\Software\WibTestAz1Key' -Recurse -Force -ErrorAction SilentlyContinue
     Remove-Item -LiteralPath 'HKCU:\Software\WibTestRepatch' -Recurse -Force -ErrorAction SilentlyContinue
     Remove-Item -LiteralPath 'HKCU:\Software\WibTestRepatchRoot' -Recurse -Force -ErrorAction SilentlyContinue
     Remove-Item -LiteralPath $tmp -Recurse -Force -ErrorAction SilentlyContinue

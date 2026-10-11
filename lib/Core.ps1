@@ -2046,6 +2046,188 @@ public static class WibKernelPathHelper {
     } catch { Write-Verbose $_.Exception.Message }
 }
 
+if (-not ([System.Management.Automation.PSTypeName]'WibRegistryHelper').Type) {
+    try {
+        Add-Type -TypeDefinition @'
+using System;
+using System.Text;
+using System.Security.AccessControl;
+using System.Security.Principal;
+using Microsoft.Win32;
+using Microsoft.Win32.SafeHandles;
+using System.Runtime.InteropServices;
+
+public static class WibRegistryHelper {
+    private const int TOKEN_ADJUST_PRIVILEGES = 0x0020;
+    private const int TOKEN_QUERY = 0x0008;
+    private const int SE_PRIVILEGE_ENABLED = 0x00000002;
+
+    private const uint REG_OPTION_BACKUP_RESTORE = 0x00000004;
+    private const int DELETE = 0x00010000;
+    private const int READ_CONTROL = 0x00020000;
+    private const int WRITE_DAC = 0x00040000;
+    private const int WRITE_OWNER = 0x00080000;
+    private const int SYNCHRONIZE = 0x00100000;
+    private const int STANDARD_RIGHTS_ALL = 0x001F0000;
+
+    private const int KEY_QUERY_VALUE = 0x0001;
+    private const int KEY_SET_VALUE = 0x0002;
+    private const int KEY_CREATE_SUB_KEY = 0x0004;
+    private const int KEY_ENUMERATE_SUB_KEYS = 0x0008;
+    private const int KEY_NOTIFY = 0x0010;
+    private const int KEY_CREATE_LINK = 0x0020;
+    private const int KEY_WOW64_64KEY = 0x0100;
+
+    private const int KEY_READ = ((READ_CONTROL | KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS | KEY_NOTIFY) & (~SYNCHRONIZE));
+    private const int KEY_WRITE = ((READ_CONTROL | KEY_SET_VALUE | KEY_CREATE_SUB_KEY) & (~SYNCHRONIZE));
+    private const int KEY_ALL_ACCESS = (STANDARD_RIGHTS_ALL | KEY_QUERY_VALUE | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_ENUMERATE_SUB_KEYS | KEY_NOTIFY | KEY_CREATE_LINK) & (~SYNCHRONIZE);
+
+    public static readonly IntPtr HKEY_LOCAL_MACHINE = new IntPtr(unchecked((int)0x80000002));
+    public static readonly IntPtr HKEY_CURRENT_USER = new IntPtr(unchecked((int)0x80000001));
+
+    [DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
+    private static extern bool OpenProcessToken(IntPtr ProcessHandle, int DesiredAccess, ref IntPtr TokenHandle);
+
+    [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+    private static extern bool LookupPrivilegeValue(string lpSystemName, string lpName, ref long lpLuid);
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    private struct TOKEN_PRIVILEGES {
+        public int PrivilegeCount;
+        public long Luid;
+        public int Attributes;
+    }
+
+    [DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
+    private static extern bool AdjustTokenPrivileges(IntPtr TokenHandle, bool DisableAllPrivileges, ref TOKEN_PRIVILEGES NewState, int BufferLength, IntPtr PreviousState, IntPtr ReturnLength);
+
+    [DllImport("kernel32.dll", ExactSpelling = true)]
+    private static extern IntPtr GetCurrentProcess();
+
+    [DllImport("kernel32.dll", ExactSpelling = true, SetLastError = true)]
+    private static extern bool CloseHandle(IntPtr handle);
+
+    [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern int RegOpenKeyExW(IntPtr hKey, string lpSubKey, uint ulOptions, int samDesired, out IntPtr phkResult);
+
+    [DllImport("advapi32.dll", SetLastError = true)]
+    private static extern int RegCloseKey(IntPtr hKey);
+
+    [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern int RegEnumKeyExW(
+        IntPtr hKey,
+        uint dwIndex,
+        StringBuilder lpName,
+        ref uint lpcchName,
+        IntPtr lpReserved,
+        StringBuilder lpClass,
+        IntPtr lpcchClass,
+        IntPtr lpftLastWriteTime);
+
+    [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern int RegDeleteKeyExW(IntPtr hKey, string lpSubKey, uint samDesired, uint Reserved);
+
+    public static bool EnablePrivilege(string privilegeName) {
+        IntPtr hToken = IntPtr.Zero;
+        try {
+            if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, ref hToken)) {
+                return false;
+            }
+            long luid = 0;
+            if (!LookupPrivilegeValue(null, privilegeName, ref luid)) {
+                return false;
+            }
+            TOKEN_PRIVILEGES tp = new TOKEN_PRIVILEGES();
+            tp.PrivilegeCount = 1;
+            tp.Luid = luid;
+            tp.Attributes = SE_PRIVILEGE_ENABLED;
+            return AdjustTokenPrivileges(hToken, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
+        } catch {
+            return false;
+        } finally {
+            if (hToken != IntPtr.Zero) {
+                CloseHandle(hToken);
+            }
+        }
+    }
+
+    public static bool EnableServicingPrivileges() {
+        bool ok = true;
+        ok &= EnablePrivilege("SeRestorePrivilege");
+        ok &= EnablePrivilege("SeBackupPrivilege");
+        ok &= EnablePrivilege("SeTakeOwnershipPrivilege");
+        return ok;
+    }
+
+    public static int DeleteRegistryKeyTree(IntPtr hRoot, string subKey) {
+        bool hasPriv = EnableServicingPrivileges();
+        return DeleteSubKeyTreeRecursive(hRoot, subKey, hasPriv);
+    }
+
+    private static int DeleteSubKeyTreeRecursive(IntPtr hKey, string subKey, bool hasPriv) {
+        IntPtr hSubKey = IntPtr.Zero;
+        int err = -1;
+
+        if (hasPriv) {
+            err = RegOpenKeyExW(hKey, subKey, REG_OPTION_BACKUP_RESTORE, KEY_ALL_ACCESS | WRITE_OWNER | WRITE_DAC | KEY_WOW64_64KEY, out hSubKey);
+            if (err != 0) {
+                err = RegOpenKeyExW(hKey, subKey, REG_OPTION_BACKUP_RESTORE, DELETE | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE | KEY_WOW64_64KEY, out hSubKey);
+            }
+        }
+
+        if (err != 0) {
+            err = RegOpenKeyExW(hKey, subKey, 0, KEY_ALL_ACCESS | KEY_WOW64_64KEY, out hSubKey);
+            if (err != 0) {
+                err = RegOpenKeyExW(hKey, subKey, 0, DELETE | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE | KEY_WOW64_64KEY, out hSubKey);
+                if (err != 0) {
+                    if (err == 2) return 0; // ERROR_FILE_NOT_FOUND (already gone)
+                    return err;
+                }
+            }
+        }
+
+        try {
+            if (hasPriv) {
+                try {
+                    using (SafeRegistryHandle sHandle = new SafeRegistryHandle(hSubKey, false)) {
+                        using (RegistryKey rk = RegistryKey.FromHandle(sHandle)) {
+                            RegistrySecurity sec = rk.GetAccessControl();
+                            sec.SetOwner(new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null));
+                            sec.ResetAccessRule(new RegistryAccessRule(
+                                new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null),
+                                RegistryRights.FullControl,
+                                InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+                                PropagationFlags.None,
+                                AccessControlType.Allow));
+                            rk.SetAccessControl(sec);
+                        }
+                    }
+                } catch { }
+            }
+
+            while (true) {
+                StringBuilder childName = new StringBuilder(512);
+                uint len = (uint)childName.Capacity;
+                int enumErr = RegEnumKeyExW(hSubKey, 0, childName, ref len, IntPtr.Zero, null, IntPtr.Zero, IntPtr.Zero);
+                if (enumErr != 0) {
+                    break;
+                }
+                int childErr = DeleteSubKeyTreeRecursive(hSubKey, childName.ToString(), hasPriv);
+                if (childErr != 0 && childErr != 2) {
+                    return childErr;
+                }
+            }
+        } finally {
+            RegCloseKey(hSubKey);
+        }
+
+        return RegDeleteKeyExW(hKey, subKey, KEY_WOW64_64KEY, 0);
+    }
+}
+'@ -ErrorAction SilentlyContinue
+    } catch { Write-Verbose $_.Exception.Message }
+}
+
 function Test-WibVolumePersistentAclSupport {
     <#
     .SYNOPSIS
@@ -3343,6 +3525,9 @@ function Get-WibOfflineTaskCacheGuids {
     $results = New-Object System.Collections.ArrayList
     $pfx = if ($script:WibHivePrefix) { $script:WibHivePrefix } else { 'wib_' }
     try {
+        if (([System.Management.Automation.PSTypeName]'WibRegistryHelper').Type) {
+            [void][WibRegistryHelper]::EnableServicingPrivileges()
+        }
         $regKey = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey("${pfx}SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tasks")
         if ($regKey) {
             try {
@@ -3541,6 +3726,51 @@ function Get-WibTweakState {
     $state
 }
 
+function Remove-WibRegistryKey {
+    <#
+    .SYNOPSIS
+        Deletes a registry key and all its subkeys reliably, including keys with
+        restrictive ACLs or ownership (such as TaskCache entries owned by TrustedInstaller/SYSTEM).
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$LiteralPath
+    )
+    if (-not (Test-Path -LiteralPath $LiteralPath)) { return }
+
+    # 1. Try PowerShell Remove-Item first
+    try {
+        Remove-Item -LiteralPath $LiteralPath -Recurse -Force -ErrorAction Stop
+        if (-not (Test-Path -LiteralPath $LiteralPath)) { return }
+    } catch {
+        Write-Verbose "Remove-Item failed on '$LiteralPath': $($_.Exception.Message). Falling back to privileged Win32 deletion."
+    }
+
+    # 2. Privileged Win32 deletion fallback
+    if (([System.Management.Automation.PSTypeName]'WibRegistryHelper').Type) {
+        $hRoot = [WibRegistryHelper]::HKEY_LOCAL_MACHINE
+        $subKey = $LiteralPath
+        if ($subKey -match '^Registry::HKEY_LOCAL_MACHINE\\(.*)$') {
+            $subKey = $Matches[1]
+        } elseif ($subKey -match '^HKLM:\\(.*)$') {
+            $subKey = $Matches[1]
+        } elseif ($subKey -match '^Registry::HKEY_CURRENT_USER\\(.*)$') {
+            $hRoot = [WibRegistryHelper]::HKEY_CURRENT_USER
+            $subKey = $Matches[1]
+        } elseif ($subKey -match '^HKCU:\\(.*)$') {
+            $hRoot = [WibRegistryHelper]::HKEY_CURRENT_USER
+            $subKey = $Matches[1]
+        }
+
+        $res = [WibRegistryHelper]::DeleteRegistryKeyTree($hRoot, $subKey)
+        if ($res -ne 0 -and (Test-Path -LiteralPath $LiteralPath)) {
+            throw "Failed to remove registry key '$LiteralPath': Win32 error $res"
+        }
+    } else {
+        Remove-Item -LiteralPath $LiteralPath -Recurse -Force
+    }
+}
+
 function Set-WibTweak {
     param($T, [System.Collections.IList]$Journal, [string]$Image = 'install')
     $p = Get-WibTweakPath $T
@@ -3575,6 +3805,9 @@ function Set-WibTweak {
             if ($isTaskCache) {
                 try {
                     $ids = New-Object System.Collections.ArrayList
+                    if ($T.Path -match 'Schedule\\TaskCache\\Tasks\\([0-9a-fA-F\-{}]+)') {
+                        [void]$ids.Add($Matches[1])
+                    }
                     $keyItem = Get-Item -LiteralPath $p -ErrorAction SilentlyContinue
                     if ($keyItem) {
                         $rootId = $keyItem.GetValue('Id')
@@ -3594,14 +3827,14 @@ function Set-WibTweak {
                             foreach ($sub in @('Tasks', 'Boot', 'Plain', 'Maintenance')) {
                                 $guidPath = "$cacheRoot\$sub\$tid"
                                 if (Test-Path -LiteralPath $guidPath) {
-                                    Remove-Item -LiteralPath $guidPath -Recurse -Force -ErrorAction SilentlyContinue
+                                    Remove-WibRegistryKey -LiteralPath $guidPath
                                 }
                             }
                         }
                     }
                 } catch { Write-Verbose $_.Exception.Message }
             }
-            Remove-Item -LiteralPath $p -Recurse -Force
+            Remove-WibRegistryKey -LiteralPath $p
         }
 
         [void]$Journal.Add(@{

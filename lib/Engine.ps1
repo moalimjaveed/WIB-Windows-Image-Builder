@@ -1469,7 +1469,7 @@ function Invoke-WibApply {
                             $tweakResults = @(Invoke-WibTweaks -Tweaks $tweaks -ModuleId $id -Journal $Ctx.Journal -Image $Ctx.Image)
                             foreach ($r in $tweakResults) {
                                 if ($r.Status -eq 'failed') {
-                                    Write-WibLog "Tweak failed: $($r.Target) - $($r.Detail)" 'WARN'
+                                    Write-WibLog "Tweak failed: $($r.Item) - $($r.Detail)" 'WARN'
                                     if ($mod.OnError -eq 'halt') {
                                         throw "Module '$id' failed with OnError=halt: $($r.Detail)"
                                     } elseif ($mod.OnError -eq 'ignore') {
@@ -1488,7 +1488,7 @@ function Invoke-WibApply {
                             if ($ad.Contains('Settings') -and $ad.Settings) { continue }   # module already applies these
                             foreach ($r in @(Invoke-WibTweaks -Tweaks @($ad.Tweaks) -ModuleId 'adaptive-hardware' -Journal $Ctx.Journal -Image $Ctx.Image)) {
                                 if ($r.Status -eq 'failed') {
-                                    Write-WibLog "Adaptive tweak failed: $($r.Target) - $($r.Detail)" 'WARN'
+                                    Write-WibLog "Adaptive tweak failed: $($r.Item) - $($r.Detail)" 'WARN'
                                 }
                                 [void]$results.Add($r)
                             }
@@ -1509,7 +1509,7 @@ function Invoke-WibApply {
                             if ($r.Status -eq 'pass') {
                                 $passed++
                             } else {
-                                Write-WibLog "Verify failed: $($r.Target) - $($r.Detail)" 'WARN'
+                                Write-WibLog "Verify failed: $($r.Item) - $($r.Detail)" 'WARN'
                                 [void]$verify.Add($r)
                             }
                         }
