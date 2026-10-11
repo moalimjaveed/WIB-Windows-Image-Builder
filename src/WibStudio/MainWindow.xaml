@@ -8,8 +8,8 @@
         xmlns:vm="clr-namespace:WibStudio.ViewModels"
         mc:Ignorable="d"
         Title="Windows Image Builder Studio"
-        Height="880" Width="1380"
-        MinHeight="720" MinWidth="1180"
+        Height="720" Width="1120"
+        MinHeight="560" MinWidth="880"
         WindowStartupLocation="CenterScreen"
         WindowBackdropType="Mica"
         ExtendsContentIntoTitleBar="True"
@@ -34,7 +34,9 @@
 
         <!-- 1: App Header -->
         <Border Grid.Row="1"
-                Padding="24,8,24,12"
+                Background="Transparent"
+                MouseLeftButtonDown="WindowHeader_MouseLeftButtonDown"
+                Padding="24,6,24,10"
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                 BorderThickness="0,0,0,1">
             <Grid>
@@ -104,7 +106,7 @@
                                                 <Setter Property="Foreground" Value="#4ADE80" />
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding IsElevated}" Value="False">
-                                                <Setter Property="Symbol" Value="ShieldError24" />
+                                                <Setter Property="Symbol" Value="Warning24" />
                                                 <Setter Property="Foreground" Value="#F59E0B" />
                                             </DataTrigger>
                                         </Style.Triggers>
@@ -137,7 +139,7 @@
                                ToolTip="Toggle Windows 11 Light/Dark Theme">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="WeatherMoon24" Margin="0,0,6,0" />
-                            <TextBlock Text="{Binding IsDarkTheme, Converter={x:Null}}"
+                            <TextBlock Text="Theme"
                                        FontSize="12" />
                         </StackPanel>
                     </ui:Button>
@@ -256,14 +258,14 @@
         </Border>
 
         <!-- 3: Active Tab Content -->
-        <Grid Grid.Row="3" Margin="24,14,24,14">
+        <Grid Grid.Row="3" Margin="24,10,24,10">
             <!-- Screen 1: Studio & Build View -->
             <views:StudioBuildView DataContext="{Binding StudioBuildVm}">
                 <views:StudioBuildView.Style>
                     <Style TargetType="views:StudioBuildView">
                         <Setter Property="Visibility" Value="Collapsed" />
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding SelectedTabIndex}" Value="0">
+                            <DataTrigger Binding="{Binding DataContext.SelectedTabIndex, RelativeSource={RelativeSource AncestorType=Window}}" Value="0">
                                 <Setter Property="Visibility" Value="Visible" />
                             </DataTrigger>
                         </Style.Triggers>
@@ -277,7 +279,7 @@
                     <Style TargetType="views:ModuleInspectorView">
                         <Setter Property="Visibility" Value="Collapsed" />
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding SelectedTabIndex}" Value="1">
+                            <DataTrigger Binding="{Binding DataContext.SelectedTabIndex, RelativeSource={RelativeSource AncestorType=Window}}" Value="1">
                                 <Setter Property="Visibility" Value="Visible" />
                             </DataTrigger>
                         </Style.Triggers>
@@ -291,7 +293,7 @@
                     <Style TargetType="views:ArtifactsView">
                         <Setter Property="Visibility" Value="Collapsed" />
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding SelectedTabIndex}" Value="2">
+                            <DataTrigger Binding="{Binding DataContext.SelectedTabIndex, RelativeSource={RelativeSource AncestorType=Window}}" Value="2">
                                 <Setter Property="Visibility" Value="Visible" />
                             </DataTrigger>
                         </Style.Triggers>

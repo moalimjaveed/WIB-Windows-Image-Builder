@@ -52,12 +52,12 @@ public partial class StudioBuildViewModel : ObservableObject
         HardwareSpecs = new ObservableCollection<HardwareSpec>(_catalogService.GetHardwareSpecs());
         LogEntries = new ObservableCollection<LogEntry>();
 
-        // Set defaults
+        // Set defaults from real WIB repository
         SelectedProfile = Profiles[0];
         SelectedEdition = Editions[0];
         SelectedHardware = HardwareSpecs[0];
 
-        WorkspacePath = @"C:\WIB\work";
+        WorkspacePath = WibPathResolver.GetDefaultWorkspaceDirectory();
 
         UpdatePreflight();
         AppendInitialBanner();
@@ -80,7 +80,7 @@ public partial class StudioBuildViewModel : ObservableObject
         }
     }
 
-    private string _workspacePath = @"C:\WIB\work";
+    private string _workspacePath = "";
     public string WorkspacePath
     {
         get => _workspacePath;
@@ -229,6 +229,7 @@ public partial class StudioBuildViewModel : ObservableObject
                 OnPropertyChanged(nameof(IsNotBusy));
                 StartBuildCommand.NotifyCanExecuteChanged();
                 PreviewPlanCommand.NotifyCanExecuteChanged();
+                ValidateProfileCommand.NotifyCanExecuteChanged();
                 CancelCommand.NotifyCanExecuteChanged();
             }
         }
@@ -263,7 +264,8 @@ public partial class StudioBuildViewModel : ObservableObject
     {
         var dialog = new OpenFolderDialog
         {
-            Title = "Select Staging Workspace Directory"
+            Title = "Select Staging Workspace Directory",
+            InitialDirectory = Directory.Exists(WorkspacePath) ? WorkspacePath : WibPathResolver.GetWibRepositoryRoot()
         };
 
         if (dialog.ShowDialog() == true)
@@ -275,7 +277,7 @@ public partial class StudioBuildViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanStartPreviewOrBuild))]
     private async Task PreviewPlanAsync()
     {
-        await ExecuteWorkflowAsync(isDryRun: true);
+        await ExecuteWorkflowAsync(command: "plan", isDryRun: true);
     }
 
     [RelayCommand(CanExecute = nameof(CanStartPreviewOrBuild))]
@@ -301,34 +303,56 @@ public partial class StudioBuildViewModel : ObservableObject
             }
         }
 
-        await ExecuteWorkflowAsync(isDryRun: IsDryRun);
+        await ExecuteWorkflowAsync(command: "build", isDryRun: IsDryRun);
     }
 
     private bool CanStartPreviewOrBuild() => !IsBusy && !string.IsNullOrWhiteSpace(IsoPath);
 
-    [RelayCommand]
-    private void ValidateProfile()
+    [RelayCommand(CanExecute = nameof(IsNotBusy))]
+    private async Task ValidateProfileAsync()
     {
-        var (isValid, messages) = _catalogService.ValidateProfileConfiguration(
-            SelectedProfile.Key,
-            AcceptHighRiskModules,
-            _catalogService.GetAllModules());
+        IsBusy = true;
+        _cts = new CancellationTokenSource();
+        StatusText = $"Status: Validating profile '{SelectedProfile.Key}'...";
 
-        LogEntries.Add(new LogEntry
+        try
         {
-            Timestamp = DateTime.Now,
-            Level = isValid ? LogLevel.Success : LogLevel.Warning,
-            Message = "--- PROFILE VALIDATION AUDIT ---"
-        });
+            // First run C# in-memory rule audit
+            var (isValid, messages) = _catalogService.ValidateProfileConfiguration(
+                SelectedProfile.Key,
+                AcceptHighRiskModules,
+                _catalogService.GetAllModules());
 
-        foreach (var msg in messages)
-        {
             LogEntries.Add(new LogEntry
             {
                 Timestamp = DateTime.Now,
-                Level = isValid ? LogLevel.Info : LogLevel.Warning,
-                Message = msg
+                Level = isValid ? LogLevel.Success : LogLevel.Warning,
+                Message = "--- PROFILE VALIDATION AUDIT ---"
             });
+
+            foreach (var msg in messages)
+            {
+                LogEntries.Add(new LogEntry
+                {
+                    Timestamp = DateTime.Now,
+                    Level = isValid ? LogLevel.Info : LogLevel.Warning,
+                    Message = msg
+                });
+            }
+
+            // Next run official PowerShell engine validation
+            await _buildService.ValidateProfileAsync(SelectedProfile.Key, AcceptHighRiskModules, _cts.Token);
+            StatusText = "Status: Profile validation complete.";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Status: Validation error: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+            _cts.Dispose();
+            _cts = null;
         }
     }
 
@@ -345,7 +369,7 @@ public partial class StudioBuildViewModel : ObservableObject
         string dir = Path.Combine(WorkspacePath, "reports");
         if (!Directory.Exists(dir))
         {
-            Directory.CreateDirectory(dir);
+            dir = WibPathResolver.GetReportsDirectory();
         }
 
         try
@@ -385,7 +409,6 @@ public partial class StudioBuildViewModel : ObservableObject
         }
         catch
         {
-            // Ignore clipboard lock
         }
     }
 
@@ -418,11 +441,17 @@ public partial class StudioBuildViewModel : ObservableObject
         {
             Timestamp = DateTime.Now,
             Level = LogLevel.Info,
+            Message = $"WIB Engine located at: {WibPathResolver.GetWibRepositoryRoot()}"
+        });
+        LogEntries.Add(new LogEntry
+        {
+            Timestamp = DateTime.Now,
+            Level = LogLevel.Info,
             Message = "Configure source media and profile inputs above, then press 'Preview Plan' or 'Start Build'."
         });
     }
 
-    private async Task ExecuteWorkflowAsync(bool isDryRun)
+    private async Task ExecuteWorkflowAsync(string command, bool isDryRun)
     {
         IsBusy = true;
         _cts = new CancellationTokenSource();
@@ -430,10 +459,13 @@ public partial class StudioBuildViewModel : ObservableObject
         _timer.Start();
 
         ProgressValue = 0;
-        StatusText = isDryRun ? "Status: Running Dry-Run Simulation..." : "Status: Initializing DISM pipeline...";
+        StatusText = command == "plan" || isDryRun
+            ? "Status: Generating execution plan..."
+            : "Status: Initializing servicing engine...";
 
         var options = new BuildExecutionOptions
         {
+            Command = command,
             IsoPath = IsoPath,
             WorkspacePath = WorkspacePath,
             Profile = SelectedProfile,
@@ -451,7 +483,7 @@ public partial class StudioBuildViewModel : ObservableObject
             bool success = await _buildService.ExecuteBuildAsync(options, _cts.Token);
             StatusText = success
                 ? "Status: Completed successfully (Exit Code 0)"
-                : "Status: Execution halted or cancelled";
+                : "Status: Execution finished (inspect console output above)";
         }
         catch (OperationCanceledException)
         {
