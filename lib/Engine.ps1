@@ -1469,6 +1469,7 @@ function Invoke-WibApply {
                             $tweakResults = @(Invoke-WibTweaks -Tweaks $tweaks -ModuleId $id -Journal $Ctx.Journal -Image $Ctx.Image)
                             foreach ($r in $tweakResults) {
                                 if ($r.Status -eq 'failed') {
+                                    Write-WibLog "Tweak failed: $($r.Target) - $($r.Detail)" 'WARN'
                                     if ($mod.OnError -eq 'halt') {
                                         throw "Module '$id' failed with OnError=halt: $($r.Detail)"
                                     } elseif ($mod.OnError -eq 'ignore') {
@@ -1486,6 +1487,9 @@ function Invoke-WibApply {
                             if (-not ($ad.Contains('Tweaks') -and $ad.Tweaks)) { continue }
                             if ($ad.Contains('Settings') -and $ad.Settings) { continue }   # module already applies these
                             foreach ($r in @(Invoke-WibTweaks -Tweaks @($ad.Tweaks) -ModuleId 'adaptive-hardware' -Journal $Ctx.Journal -Image $Ctx.Image)) {
+                                if ($r.Status -eq 'failed') {
+                                    Write-WibLog "Adaptive tweak failed: $($r.Target) - $($r.Detail)" 'WARN'
+                                }
                                 [void]$results.Add($r)
                             }
                         }
@@ -1502,7 +1506,12 @@ function Invoke-WibApply {
                         foreach ($t in $tweaks) {
                             if ($script:WibLoadedHives -notcontains $t.Hive) { continue }
                             $r = Test-WibTweak $t
-                            if ($r.Status -eq 'pass') { $passed++ } else { [void]$verify.Add($r) }
+                            if ($r.Status -eq 'pass') {
+                                $passed++
+                            } else {
+                                Write-WibLog "Verify failed: $($r.Target) - $($r.Detail)" 'WARN'
+                                [void]$verify.Add($r)
+                            }
                         }
                         if ($passed -gt 0) { [void]$verify.Add((New-WibResult 'verify' "$id : $passed registry tweak(s)" 'pass')) }
                     }

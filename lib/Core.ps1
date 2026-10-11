@@ -3652,7 +3652,10 @@ function Set-WibTweak {
     $pfx = if ($script:WibHivePrefix) { $script:WibHivePrefix } else { 'wib_' }
     $hiveRoot = "Registry::HKEY_LOCAL_MACHINE\$pfx$($T.Hive)"
     if (Test-Path -LiteralPath $hiveRoot) {
-        if (-not (Test-Path -LiteralPath $p)) { $null = New-Item -LiteralPath $p -Force }
+        if (-not (Test-Path -LiteralPath $p)) {
+            $escapedKey = [WildcardPattern]::Escape($p)
+            $null = New-Item -Path $escapedKey -Force
+        }
         $val = $T.Value
         if ($T.Type -eq 'DWord') {
             if ($val -is [string] -and $val.StartsWith('0x', [System.StringComparison]::OrdinalIgnoreCase)) {
