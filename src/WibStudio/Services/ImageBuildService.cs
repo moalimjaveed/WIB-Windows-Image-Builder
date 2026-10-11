@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 using WibStudio.Models;
 
 namespace WibStudio.Services;
@@ -79,6 +80,9 @@ public class ImageBuildService
         string repoRoot = WibPathResolver.GetWibRepositoryRoot();
         Log(LogLevel.Info, $"Executing authoritative WIB engine: {scriptPath}");
         Log(LogLevel.Info, $"Working directory: {repoRoot}");
+
+        // Auto-recover if a previous orphaned build process left the workspace locked
+        CleanupStaleWorkspaceLock(options.WorkspacePath);
 
         // Build exact command-line arguments conforming to build.ps1
         var argsList = new List<string>
@@ -406,6 +410,164 @@ public class ImageBuildService
         await Task.Delay(150);
         Log(LogLevel.Success, "Reports written to workspace reports folder.");
         return true;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RM_UNIQUE_PROCESS
+    {
+        public int dwProcessId;
+        public System.Runtime.InteropServices.ComTypes.FILETIME ProcessStartTime;
+    }
+
+    private const int CCH_RM_MAX_APP_NAME = 255;
+    private const int CCH_RM_MAX_SVC_NAME = 63;
+
+    private enum RM_APP_TYPE
+    {
+        RmUnknownApp = 0,
+        RmMainWindow = 1,
+        RmOtherWindow = 2,
+        RmService = 3,
+        RmExplorer = 4,
+        RmConsole = 5,
+        RmCritical = 1000
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct RM_PROCESS_INFO
+    {
+        public RM_UNIQUE_PROCESS Process;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = CCH_RM_MAX_APP_NAME + 1)]
+        public string strAppName;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = CCH_RM_MAX_SVC_NAME + 1)]
+        public string strServiceShortName;
+        public RM_APP_TYPE ApplicationType;
+        public uint AppStatus;
+        public uint TSSessionId;
+        [MarshalAs(UnmanagedType.Bool)]
+        public bool bRestartable;
+    }
+
+    [DllImport("rstrtmgr.dll", CharSet = CharSet.Unicode)]
+    private static extern int RmStartSession(out uint pSessionHandle, int dwSessionFlags, string strSessionKey);
+
+    [DllImport("rstrtmgr.dll")]
+    private static extern int RmEndSession(uint pSessionHandle);
+
+    [DllImport("rstrtmgr.dll", CharSet = CharSet.Unicode)]
+    private static extern int RmRegisterResources(uint pSessionHandle, uint nFiles, string[] rgsFilenames,
+        uint nApplications, [In] RM_UNIQUE_PROCESS[]? rgApplications, uint nServices, [In] string[]? rgsServiceNames);
+
+    [DllImport("rstrtmgr.dll")]
+    private static extern int RmGetList(uint dwSessionHandle, out uint pnProcInfoNeeded,
+        ref uint pnProcInfo, [In, Out] RM_PROCESS_INFO[]? rgAffectedApps, out uint lpdwRebootReasons);
+
+    private static List<int> FindLockingPids(string filePath)
+    {
+        var pids = new List<int>();
+        if (!File.Exists(filePath)) return pids;
+
+        string key = Guid.NewGuid().ToString();
+        int res = RmStartSession(out uint handle, 0, key);
+        if (res != 0) return pids;
+
+        try
+        {
+            string[] resources = new[] { filePath };
+            res = RmRegisterResources(handle, (uint)resources.Length, resources, 0, null, 0, null);
+            if (res != 0) return pids;
+
+            uint arraySize = 0;
+            uint procInfoNeeded = 0;
+            uint rebootReasons = 0;
+            res = RmGetList(handle, out procInfoNeeded, ref arraySize, null, out rebootReasons);
+            if (res == 234) // ERROR_MORE_DATA
+            {
+                var infos = new RM_PROCESS_INFO[procInfoNeeded];
+                arraySize = procInfoNeeded;
+                res = RmGetList(handle, out procInfoNeeded, ref arraySize, infos, out rebootReasons);
+                if (res == 0)
+                {
+                    for (int i = 0; i < arraySize; i++)
+                    {
+                        pids.Add(infos[i].Process.dwProcessId);
+                    }
+                }
+            }
+        }
+        catch { }
+        finally
+        {
+            RmEndSession(handle);
+        }
+
+        return pids;
+    }
+
+    public void CleanupStaleWorkspaceLock(string workspacePath)
+    {
+        if (string.IsNullOrWhiteSpace(workspacePath)) return;
+        string lockFile = Path.Combine(workspacePath, "build.lock.json");
+        if (!File.Exists(lockFile)) return;
+
+        bool isLocked = false;
+        try
+        {
+            using var fs = File.Open(lockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+        }
+        catch (IOException)
+        {
+            isLocked = true;
+        }
+
+        if (!isLocked) return;
+
+        Log(LogLevel.Warning, "Workspace is currently locked by an orphaned build process. Resolving locking processes...");
+
+        try
+        {
+            var pids = FindLockingPids(lockFile);
+            if (pids.Count > 0)
+            {
+                foreach (int pid in pids)
+                {
+                    try
+                    {
+                        var p = Process.GetProcessById(pid);
+                        string procName = p.ProcessName;
+                        p.Kill(entireProcessTree: true);
+                        p.WaitForExit(3000);
+                        Log(LogLevel.Info, $"Terminated locking process (PID {pid}, {procName}). Released workspace lock.");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log(LogLevel.Warning, $"Failed to terminate locking process PID {pid}: {ex.Message}");
+                    }
+                }
+            }
+            else
+            {
+                // Fallback: If Restart Manager couldn't enumerate handles due to permissions, look for powershell processes started earlier
+                foreach (var p in Process.GetProcessesByName("powershell"))
+                {
+                    try
+                    {
+                        if (p.StartTime < DateTime.Now.AddSeconds(-5))
+                        {
+                            int id = p.Id;
+                            p.Kill(entireProcessTree: true);
+                            p.WaitForExit(2000);
+                            Log(LogLevel.Info, $"Terminated lingering build worker (PID {id}).");
+                        }
+                    }
+                    catch { }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log(LogLevel.Warning, $"Stale lock resolution notice: {ex.Message}");
+        }
     }
 
     private void Log(LogLevel level, string message)

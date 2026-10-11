@@ -455,11 +455,25 @@ public partial class StudioBuildViewModel : ObservableObject
         }
     }
 
-    [RelayCommand(CanExecute = nameof(IsBusy))]
+    [RelayCommand]
     private void Cancel()
     {
-        _cts?.Cancel();
-        StatusText = "Status: Cancellation requested...";
+        if (IsBusy)
+        {
+            _cts?.Cancel();
+            StatusText = "Status: Cancellation requested...";
+        }
+        else
+        {
+            _buildService.CleanupStaleWorkspaceLock(WorkspacePath);
+            StatusText = "Status: Workspace lock released and stale background workers terminated.";
+            LogEntries.Add(new LogEntry
+            {
+                Timestamp = DateTime.Now,
+                Level = LogLevel.Info,
+                Message = "Workspace lock released and stale background workers terminated."
+            });
+        }
     }
 
     [RelayCommand]
