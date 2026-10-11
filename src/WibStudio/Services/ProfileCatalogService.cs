@@ -708,11 +708,18 @@ public class ProfileCatalogService
 
     private static List<TargetEdition> InitializeEditions() =>
     [
-        new() { Index = 0, DisplayName = "Auto-detect (Single Edition)", EditionName = "Auto", Architecture = "x64", Description = "Inspects install.wim metadata and servicing catalog automatically" },
-        new() { Index = 1, DisplayName = "Image Index 1 (Windows 11 Pro)", EditionName = "Professional", Architecture = "x64", Description = "Includes BitLocker, Hyper-V, Sandbox, and Group Policy Management" },
-        new() { Index = 2, DisplayName = "Image Index 2 (Windows 11 Home)", EditionName = "Core", Architecture = "x64", Description = "Standard consumer baseline with local account bypass enabled" },
-        new() { Index = 3, DisplayName = "Image Index 3 (Windows 11 Enterprise)", EditionName = "Enterprise", Architecture = "x64", Description = "Volume licensing tier with advanced AppLocker and DirectAccess" },
-        new() { Index = 4, DisplayName = "Image Index 4 (Windows 11 Education)", EditionName = "Education", Architecture = "x64", Description = "Academic baseline with consumer features disabled by default" }
+        new() { Index = 0, DisplayName = "Auto-detect (Windows 11 Pro / Primary)", EditionName = "Auto", Architecture = "x64", Description = "Auto-selects Windows 11 Pro or single available edition automatically" },
+        new() { Index = 6, DisplayName = "Image Index 6: Windows 11 Pro (Consumer ISO)", EditionName = "Professional", Architecture = "x64", Description = "Standard Windows 11 Pro on official multi-edition consumer ISOs" },
+        new() { Index = 1, DisplayName = "Image Index 1: Windows 11 Home (Consumer) / Pro (Business)", EditionName = "Home/Pro", Architecture = "x64", Description = "Index 1 (Home on Consumer ISO, Pro on Business/Enterprise ISO)" },
+        new() { Index = 2, DisplayName = "Image Index 2: Windows 11 Home N", EditionName = "CoreN", Architecture = "x64", Description = "Consumer baseline without media technologies" },
+        new() { Index = 3, DisplayName = "Image Index 3: Windows 11 Home Single Language", EditionName = "CoreSingleLanguage", Architecture = "x64", Description = "OEM Single Language baseline" },
+        new() { Index = 4, DisplayName = "Image Index 4: Windows 11 Education", EditionName = "Education", Architecture = "x64", Description = "Academic baseline with consumer features disabled by default" },
+        new() { Index = 5, DisplayName = "Image Index 5: Windows 11 Education N", EditionName = "EducationN", Architecture = "x64", Description = "Academic baseline without media technologies" },
+        new() { Index = 7, DisplayName = "Image Index 7: Windows 11 Pro N", EditionName = "ProfessionalN", Architecture = "x64", Description = "Pro baseline without media technologies" },
+        new() { Index = 8, DisplayName = "Image Index 8: Windows 11 Pro Education", EditionName = "ProfessionalEducation", Architecture = "x64", Description = "Pro Education tier with academic policy defaults" },
+        new() { Index = 9, DisplayName = "Image Index 9: Windows 11 Pro Education N", EditionName = "ProfessionalEducationN", Architecture = "x64", Description = "Pro Education tier without media technologies" },
+        new() { Index = 10, DisplayName = "Image Index 10: Windows 11 Pro for Workstations", EditionName = "ProfessionalWorkstation", Architecture = "x64", Description = "Workstation tier with ReFS and SMB Direct support" },
+        new() { Index = 11, DisplayName = "Image Index 11: Windows 11 Pro N for Workstations", EditionName = "ProfessionalWorkstationN", Architecture = "x64", Description = "Workstation tier without media technologies" }
     ];
 
     private static List<HardwareSpec> LoadHardwareSpecs()

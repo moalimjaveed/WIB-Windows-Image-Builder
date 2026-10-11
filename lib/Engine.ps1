@@ -9,11 +9,33 @@ function Select-WibIndex {
     }
     if ($imgs.Count -eq 1) { return [int]$imgs[0].ImageIndex }
     foreach ($i in $imgs) { Write-Host ('  {0}: {1}' -f $i.ImageIndex, $i.ImageName) }
-    if ([Console]::IsInputRedirected -or -not [Environment]::UserInteractive) { throw 'Multiple editions found; pass -Index.' }
+
+    # Find the primary preferred edition (Windows 11 Pro first, then first available)
+    $proCandidate = $imgs | Where-Object { $_.ImageName -match '(?i)Windows 11 Pro$' } | Select-Object -First 1
+    if (-not $proCandidate) {
+        $proCandidate = $imgs | Where-Object { $_.ImageName -match '(?i)\bPro\b' } | Select-Object -First 1
+    }
+    $defaultIndex = if ($proCandidate) { [int]$proCandidate.ImageIndex } else { [int]$imgs[0].ImageIndex }
+    $defaultName = if ($proCandidate) { $proCandidate.ImageName } else { $imgs[0].ImageName }
+
+    if ([Console]::IsInputRedirected -or -not [Environment]::UserInteractive) {
+        Write-Host ('[INFO] Auto-selected primary target edition: [{0}] {1} (pass -Index to choose another).' -f $defaultIndex, $defaultName)
+        return $defaultIndex
+    }
+
     $n = 0
-    do { $in = Read-Host 'Enter the image index to build' }
-    while (-not ([int]::TryParse($in, [ref]$n) -and ($imgs.ImageIndex -contains $n)))
-    return $n
+    $prompt = ('Enter the image index to build [Default: {0} ({1})]' -f $defaultIndex, $defaultName)
+    $in = Read-Host $prompt
+    if ([string]::IsNullOrWhiteSpace($in)) {
+        Write-Host ('[INFO] Selected default edition: [{0}] {1}' -f $defaultIndex, $defaultName)
+        return $defaultIndex
+    }
+    if ([int]::TryParse($in, [ref]$n) -and ($imgs.ImageIndex -contains $n)) {
+        return $n
+    }
+
+    Write-Host ('[WARN] Input "{0}" was not a valid edition index. Defaulting to: [{1}] {2}' -f $in, $defaultIndex, $defaultName)
+    return $defaultIndex
 }
 
 function Get-WibArchitectureName {

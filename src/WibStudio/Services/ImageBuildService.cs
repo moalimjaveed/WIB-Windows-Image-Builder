@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using WibStudio.Models;
@@ -154,6 +155,7 @@ public class ImageBuildService
             WorkingDirectory = workingDir,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            RedirectStandardInput = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
@@ -165,7 +167,9 @@ public class ImageBuildService
             if (!string.IsNullOrEmpty(e.Data))
             {
                 LogLevel level = ParseLogLevel(e.Data);
-                Log(level, e.Data);
+                // Strip redundant timestamp and level prefixes produced by build.ps1 if present
+                string cleanMessage = Regex.Replace(e.Data, @"^\[\d{2}:\d{2}:\d{2}\]\s*\[[A-Za-z]+\]\s*", "");
+                Log(level, cleanMessage);
 
                 // Update progress on stage messages
                 if (e.Data.Contains("PASS", StringComparison.OrdinalIgnoreCase))

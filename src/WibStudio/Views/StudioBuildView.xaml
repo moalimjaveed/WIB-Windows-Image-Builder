@@ -365,7 +365,7 @@
                 Padding="14,10">
             <Grid>
                 <Grid.RowDefinitions>
-                    <!-- Status Row -->
+                    <!-- Status & Console Header Row -->
                     <RowDefinition Height="Auto" />
                     <!-- Progress Bar -->
                     <RowDefinition Height="Auto" />
@@ -373,37 +373,67 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <!-- Status Row -->
-                <Grid Grid.Row="0" Margin="0,0,0,6">
-                    <TextBlock Text="{Binding StatusText}"
-                               FontSize="12"
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource WibTerminalText}"
-                               VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding ElapsedTimeText}"
-                               FontSize="12"
-                               FontWeight="SemiBold"
-                               Foreground="#38BDF8"
-                               HorizontalAlignment="Right"
-                               VerticalAlignment="Center" />
+                <!-- Status & Console Header Row -->
+                <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left: Console Title, Line Counter, & Status -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:SymbolIcon Symbol="Code24" Foreground="#38BDF8" Margin="0,0,8,0" FontSize="16" />
+                        <TextBlock Text="SERVICING CONSOLE"
+                                   FontSize="11"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource WibPrimaryAccent}"
+                                   VerticalAlignment="Center" />
+                        <Border Background="#1E293B" CornerRadius="4" Padding="6,1" Margin="8,0,12,0" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding LogEntries.Count, StringFormat='{}{0} lines'}"
+                                       FontSize="10.5"
+                                       FontWeight="Medium"
+                                       Foreground="#94A3B8" />
+                        </Border>
+                        <TextBlock Text="{Binding StatusText}"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource WibTerminalText}"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxWidth="520" />
+                    </StackPanel>
+
+                    <!-- Right: Elapsed Timer -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:SymbolIcon Symbol="Timer24" Foreground="#38BDF8" Margin="0,0,6,0" FontSize="15" />
+                        <TextBlock Text="{Binding ElapsedTimeText}"
+                                   FontSize="12"
+                                   FontWeight="Bold"
+                                   Foreground="#38BDF8"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
                 </Grid>
 
-                <!-- Thin 4px Modern Progress Indicator -->
+                <!-- Thin 3px Modern Progress Indicator -->
                 <ProgressBar Grid.Row="1"
                              Value="{Binding ProgressValue}"
                              Maximum="100"
-                             Height="4"
-                             Margin="0,0,0,10" />
+                             Height="3"
+                             Margin="0,0,0,8" />
 
-                <!-- Terminal View -->
+                <!-- Terminal View with Sleek Modern ScrollBar -->
                 <ScrollViewer Grid.Row="2"
                               x:Name="ConsoleScrollViewer"
                               VerticalScrollBarVisibility="Auto"
-                              HorizontalScrollBarVisibility="Auto">
+                              HorizontalScrollBarVisibility="Disabled"
+                              Padding="0,2,8,2">
+                    <ScrollViewer.Resources>
+                        <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource WibTerminalScrollBarStyle}" />
+                    </ScrollViewer.Resources>
                     <ItemsControl ItemsSource="{Binding LogEntries}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type models:LogEntry}">
-                                <Grid Margin="0,1">
+                                <Grid Margin="0,1.5">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="Auto" />
@@ -415,15 +445,15 @@
                                                FontFamily="Cascadia Code, Consolas, Courier New"
                                                FontSize="11.5"
                                                Foreground="#64748B"
-                                               Margin="0,0,8,0" />
+                                               Margin="0,0,10,0" />
                                     <!-- Level Prefix -->
                                     <TextBlock Grid.Column="1"
                                                Text="{Binding LevelPrefix}"
                                                FontFamily="Cascadia Code, Consolas, Courier New"
                                                FontSize="11.5"
-                                               FontWeight="SemiBold"
+                                               FontWeight="Bold"
                                                Foreground="{Binding Level, Converter={StaticResource LogLevelToBrushConverter}}"
-                                               Margin="0,0,8,0" />
+                                               Margin="0,0,10,0" />
                                     <!-- Message Text -->
                                     <TextBlock Grid.Column="2"
                                                Text="{Binding Message}"

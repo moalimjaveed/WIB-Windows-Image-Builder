@@ -22,12 +22,9 @@ public partial class StudioBuildView : UserControl
 
     private void OnLogEntriesChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        if (e.Action == NotifyCollectionChangedAction.Add)
+        Dispatcher.InvokeAsync(() =>
         {
-            Dispatcher.InvokeAsync(() =>
-            {
-                ConsoleScrollViewer.ScrollToEnd();
-            });
-        }
+            ConsoleScrollViewer.ScrollToEnd();
+        }, System.Windows.Threading.DispatcherPriority.Background);
     }
 }
