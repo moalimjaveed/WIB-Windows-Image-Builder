@@ -37,48 +37,63 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Privilege Badge -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,24,0">
-                    <ui:SymbolIcon Symbol="ShieldCheckmark24" Foreground="{StaticResource WibPrimaryAccent}" Margin="0,0,8,0" />
-                    <Border Background="#24382A" CornerRadius="12" Padding="10,3" BorderBrush="#16A34A" BorderThickness="1">
-                        <TextBlock Text="{Binding PreflightPrivilege}" FontSize="12" FontWeight="SemiBold" Foreground="#4ADE80" />
-                    </Border>
-                </StackPanel>
+                <!-- Privilege Badge (Subtle Rounded Box matching theme) -->
+                <Border Grid.Column="0"
+                        Margin="0,0,24,0"
+                        CornerRadius="6"
+                        Padding="10,4"
+                        BorderThickness="1"
+                        Background="{Binding PreflightPrivilegeBackground}"
+                        BorderBrush="{Binding PreflightPrivilegeBorder}"
+                        VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:SymbolIcon Symbol="{Binding PreflightPrivilegeIconSymbol}"
+                                       Foreground="{Binding PreflightPrivilegeForeground}"
+                                       FontSize="15"
+                                       Margin="0,0,6,0" />
+                        <TextBlock Text="{Binding PreflightPrivilege}"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="{Binding PreflightPrivilegeForeground}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
 
                 <!-- Source ISO -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
-                    <ui:SymbolIcon Symbol="Image24" Foreground="#94A3B8" Margin="0,0,8,0" />
+                    <ui:SymbolIcon Symbol="Image24" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,8,0" />
                     <StackPanel>
-                        <TextBlock Text="Source ISO" FontSize="11" Foreground="#94A3B8" />
+                        <TextBlock Text="Source ISO" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Text="{Binding PreflightIsoSummary}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" TextTrimming="CharacterEllipsis" MaxWidth="260" />
                     </StackPanel>
                 </StackPanel>
 
                 <!-- Staging Workspace -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
-                    <ui:SymbolIcon Symbol="HardDrive24" Foreground="#94A3B8" Margin="0,0,8,0" />
+                    <ui:SymbolIcon Symbol="HardDrive24" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,8,0" />
                     <StackPanel>
-                        <TextBlock Text="Staging Disk Quota" FontSize="11" Foreground="#94A3B8" />
+                        <TextBlock Text="Staging Disk Quota" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Text="{Binding PreflightWorkspaceSummary}" FontSize="12" FontWeight="SemiBold" Foreground="{Binding IsLowDiskSpace, Converter={StaticResource LowDiskToBrushConverter}}" />
                     </StackPanel>
                 </StackPanel>
 
                 <!-- Active Profile -->
                 <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
-                    <ui:SymbolIcon Symbol="Wrench24" Foreground="#94A3B8" Margin="0,0,8,0" />
+                    <ui:SymbolIcon Symbol="Wrench24" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,8,0" />
                     <StackPanel>
-                        <TextBlock Text="Active Servicing Profile" FontSize="11" Foreground="#94A3B8" />
+                        <TextBlock Text="Active Servicing Profile" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Text="{Binding ActiveProfileSummary}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" TextTrimming="CharacterEllipsis" MaxWidth="300" />
                     </StackPanel>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- Quick-Start Beginner Steps Ribbon -->
+        <!-- Quick-Start Beginner Steps Ribbon (Theme-Adaptive) -->
         <Border Grid.Row="1"
-                Style="{StaticResource WibCardStyle}"
-                Background="#0F172A"
-                BorderBrush="#1E293B"
+                Background="{Binding QuickStartBackground}"
+                BorderBrush="{Binding QuickStartBorder}"
+                BorderThickness="1"
+                CornerRadius="6"
                 Padding="16,8"
                 Margin="0,0,0,10">
             <Grid>
@@ -87,22 +102,22 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
-                    <ui:SymbolIcon Symbol="Lightbulb24" Foreground="#38BDF8" Margin="0,0,8,0" />
-                    <TextBlock Text="Quick Start Guide" FontWeight="SemiBold" Foreground="#38BDF8" FontSize="12" VerticalAlignment="Center" />
+                    <ui:SymbolIcon Symbol="Lightbulb24" Foreground="{Binding QuickStartAccentText}" Margin="0,0,8,0" />
+                    <TextBlock Text="Quick Start Guide" FontWeight="SemiBold" Foreground="{Binding QuickStartAccentText}" FontSize="12" VerticalAlignment="Center" />
                 </StackPanel>
                 <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="12" TextWrapping="Wrap">
-                    <Run Text="Step 1:" FontWeight="Bold" Foreground="#38BDF8" />
-                    <Run Text=" Click " Foreground="#94A3B8" />
-                    <Run Text="'Browse ISO...'" FontWeight="SemiBold" Foreground="#F1F5F9" />
-                    <Run Text=" to pick your official Windows 11 ISO  •  " Foreground="#94A3B8" />
-                    <Run Text="Step 2:" FontWeight="Bold" Foreground="#38BDF8" />
-                    <Run Text=" Keep " Foreground="#94A3B8" />
-                    <Run Text="'balanced'" FontWeight="SemiBold" Foreground="#F1F5F9" />
-                    <Run Text=" profile (recommended)  •  " Foreground="#94A3B8" />
-                    <Run Text="Step 3:" FontWeight="Bold" Foreground="#38BDF8" />
-                    <Run Text=" Click " Foreground="#94A3B8" />
-                    <Run Text="'Start Build'" FontWeight="Bold" Foreground="#4ADE80" />
-                    <Run Text=" below!" Foreground="#94A3B8" />
+                    <Run Text="Step 1:" FontWeight="Bold" Foreground="{Binding QuickStartAccentText}" />
+                    <Run Text=" Click " Foreground="{Binding QuickStartBodyText}" />
+                    <Run Text="'Browse ISO...'" FontWeight="SemiBold" Foreground="{Binding QuickStartHighlightText}" />
+                    <Run Text=" to pick your official Windows 11 ISO  •  " Foreground="{Binding QuickStartBodyText}" />
+                    <Run Text="Step 2:" FontWeight="Bold" Foreground="{Binding QuickStartAccentText}" />
+                    <Run Text=" Keep " Foreground="{Binding QuickStartBodyText}" />
+                    <Run Text="'balanced'" FontWeight="SemiBold" Foreground="{Binding QuickStartHighlightText}" />
+                    <Run Text=" profile (recommended)  •  " Foreground="{Binding QuickStartBodyText}" />
+                    <Run Text="Step 3:" FontWeight="Bold" Foreground="{Binding QuickStartAccentText}" />
+                    <Run Text=" Click " Foreground="{Binding QuickStartBodyText}" />
+                    <Run Text="'Start Build'" FontWeight="Bold" Foreground="{Binding QuickStartSuccessText}" />
+                    <Run Text=" below!" Foreground="{Binding QuickStartBodyText}" />
                 </TextBlock>
             </Grid>
         </Border>
@@ -197,7 +212,7 @@
                                   Margin="0,0,0,4" />
                         <TextBlock Text="{Binding SelectedEdition.Description}"
                                    FontSize="11"
-                                   Foreground="#94A3B8"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                    TextTrimming="CharacterEllipsis" />
                     </StackPanel>
 
@@ -211,7 +226,7 @@
                                   Margin="0,0,0,4" />
                         <TextBlock Text="{Binding SelectedHardware.OptimizationsSummary}"
                                    FontSize="11"
-                                   Foreground="#94A3B8"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                    TextTrimming="CharacterEllipsis" />
                     </StackPanel>
                 </Grid>
@@ -254,16 +269,42 @@
 
                 <!-- Left Action Cluster -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <!-- 1. Start Build (Primary Accent Action - Big & Prominent) -->
-                    <ui:Button Content="Start Build"
-                               Icon="{ui:SymbolIcon Symbol=Play24}"
-                               Appearance="Primary"
-                               Command="{Binding StartBuildCommand}"
+                    <!-- 1. Start Build (Primary Action - High-Contrast White Text & Icon) -->
+                    <ui:Button Command="{Binding StartBuildCommand}"
                                Margin="0,0,12,0"
-                               Padding="24,9"
-                               FontWeight="SemiBold"
-                               FontSize="13"
-                               ToolTip="Start building your customized, bloat-free Windows 11 installation media" />
+                               Padding="22,9"
+                               ToolTip="Start building your customized, bloat-free Windows 11 installation media">
+                        <ui:Button.Style>
+                            <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+                                <Setter Property="Background" Value="#0284C7" />
+                                <Setter Property="BorderBrush" Value="#0369A1" />
+                                <Setter Property="BorderThickness" Value="1" />
+                                <Setter Property="Foreground" Value="#FFFFFF" />
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#0369A1" />
+                                        <Setter Property="BorderBrush" Value="#075985" />
+                                        <Setter Property="Foreground" Value="#FFFFFF" />
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter Property="Background" Value="#075985" />
+                                        <Setter Property="Foreground" Value="#FFFFFF" />
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.6" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ui:Button.Style>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <ui:SymbolIcon Symbol="Play24" Foreground="#FFFFFF" FontSize="15" Margin="0,0,8,0" />
+                            <TextBlock Text="Start Build"
+                                       FontWeight="Bold"
+                                       FontSize="13"
+                                       Foreground="#FFFFFF"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ui:Button>
 
                     <!-- 2. Preview Plan (Dry Run) -->
                     <ui:Button Content="Preview Plan (Dry Run)"
@@ -337,7 +378,7 @@
                     <TextBlock Text="{Binding StatusText}"
                                FontSize="12"
                                FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                               Foreground="{StaticResource WibTerminalText}"
                                VerticalAlignment="Center" />
                     <TextBlock Text="{Binding ElapsedTimeText}"
                                FontSize="12"

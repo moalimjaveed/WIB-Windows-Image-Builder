@@ -108,7 +108,7 @@
                     <DataGridTemplateColumn Header="Integrity Status" Width="140">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate DataType="{x:Type models:BuildArtifact}">
-                                <Border Background="#1E3A2B" BorderBrush="#16A34A" BorderThickness="1" CornerRadius="10" Padding="8,2" HorizontalAlignment="Center">
+                                <Border Background="#14291E" BorderBrush="#16A34A" BorderThickness="1" CornerRadius="6" Padding="8,2" HorizontalAlignment="Center">
                                     <TextBlock Text="{Binding Status}" FontSize="11" FontWeight="SemiBold" Foreground="#4ADE80" />
                                 </Border>
                             </DataTemplate>
@@ -116,7 +116,7 @@
                     </DataGridTemplateColumn>
 
                     <!-- Full Path -->
-                    <DataGridTextColumn Header="File Path" Binding="{Binding FilePath}" Width="*" Foreground="#94A3B8" />
+                    <DataGridTextColumn Header="File Path" Binding="{Binding FilePath}" Width="*" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
@@ -158,7 +158,7 @@
                                    FontFamily="Cascadia Code, Consolas"
                                    FontSize="13"
                                    FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                                   Foreground="{StaticResource WibTerminalText}"
                                    Margin="0,0,12,0"
                                    VerticalAlignment="Center" />
                         <TextBlock Text="{Binding SelectedArtifact.FileType}"

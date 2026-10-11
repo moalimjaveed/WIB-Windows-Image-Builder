@@ -110,18 +110,18 @@
                     <DataGridTemplateColumn Header="Status" Width="90">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate DataType="{x:Type models:ServicingModule}">
-                                <Border Margin="6,2" CornerRadius="10" Padding="8,2" HorizontalAlignment="Center">
+                                <Border Margin="6,2" CornerRadius="6" Padding="8,2" HorizontalAlignment="Center">
                                     <Border.Style>
                                         <Style TargetType="Border">
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                                    <Setter Property="Background" Value="#1E3A2B" />
+                                                    <Setter Property="Background" Value="#14291E" />
                                                     <Setter Property="BorderBrush" Value="#16A34A" />
                                                     <Setter Property="BorderThickness" Value="1" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding IsActive}" Value="False">
-                                                    <Setter Property="Background" Value="#2D3239" />
-                                                    <Setter Property="BorderBrush" Value="#4B5563" />
+                                                    <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorSecondaryBrush}" />
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
                                                     <Setter Property="BorderThickness" Value="1" />
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -137,7 +137,7 @@
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding IsActive}" Value="False">
                                                         <Setter Property="Text" Value="OFF" />
-                                                        <Setter Property="Foreground" Value="#94A3B8" />
+                                                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -158,8 +158,8 @@
                     <DataGridTemplateColumn Header="Risk" Width="110">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate DataType="{x:Type models:ServicingModule}">
-                                <Border CornerRadius="10" Padding="8,2" HorizontalAlignment="Center"
-                                        Background="#242830" BorderThickness="1"
+                                <Border CornerRadius="6" Padding="8,2" HorizontalAlignment="Center"
+                                        Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" BorderThickness="1"
                                         BorderBrush="{Binding Risk, Converter={StaticResource RiskToBrushConverter}}">
                                     <TextBlock Text="{Binding RiskBadge}"
                                                FontSize="11" FontWeight="SemiBold"
@@ -173,8 +173,10 @@
                     <DataGridTemplateColumn Header="Scope" Width="120">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate DataType="{x:Type models:ServicingModule}">
-                                <Border CornerRadius="10" Padding="8,2" HorizontalAlignment="Center" Background="#1E293B" BorderBrush="#38BDF8" BorderThickness="1">
-                                    <TextBlock Text="{Binding ScopeBadge}" FontSize="11" Foreground="#38BDF8" />
+                                <Border CornerRadius="6" Padding="8,2" HorizontalAlignment="Center"
+                                        Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                    <TextBlock Text="{Binding ScopeBadge}" FontSize="11" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                                 </Border>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
@@ -233,21 +235,25 @@
                         <!-- Right Badges -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                             <!-- Risk -->
-                            <Border CornerRadius="10" Padding="10,3" Margin="0,0,8,0"
-                                    Background="#242830" BorderThickness="1"
+                            <Border CornerRadius="6" Padding="10,3" Margin="0,0,8,0"
+                                    Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" BorderThickness="1"
                                     BorderBrush="{Binding Risk, Converter={StaticResource RiskToBrushConverter}}">
                                 <TextBlock Text="{Binding RiskBadge}" FontSize="11" FontWeight="SemiBold"
                                            Foreground="{Binding Risk, Converter={StaticResource RiskToBrushConverter}}" />
                             </Border>
 
                             <!-- Scope -->
-                            <Border CornerRadius="10" Padding="10,3" Margin="0,0,8,0" Background="#1E293B" BorderBrush="#38BDF8" BorderThickness="1">
-                                <TextBlock Text="{Binding ScopeBadge}" FontSize="11" Foreground="#38BDF8" />
+                            <Border CornerRadius="6" Padding="10,3" Margin="0,0,8,0"
+                                    Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                <TextBlock Text="{Binding ScopeBadge}" FontSize="11" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                             </Border>
 
                             <!-- Reversibility -->
-                            <Border CornerRadius="10" Padding="10,3" Background="#2E1065" BorderBrush="#C084FC" BorderThickness="1">
-                                <TextBlock Text="{Binding ReversibilityBadge}" FontSize="11" Foreground="#C084FC" />
+                            <Border CornerRadius="6" Padding="10,3"
+                                    Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                <TextBlock Text="{Binding ReversibilityBadge}" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                             </Border>
                         </StackPanel>
                     </Grid>

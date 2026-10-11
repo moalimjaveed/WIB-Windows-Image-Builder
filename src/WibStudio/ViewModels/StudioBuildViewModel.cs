@@ -6,12 +6,14 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using WibStudio.Models;
 using WibStudio.Services;
+using SymbolRegular = Wpf.Ui.Controls.SymbolRegular;
 
 namespace WibStudio.ViewModels;
 
@@ -163,6 +165,74 @@ public partial class StudioBuildViewModel : ObservableObject
     {
         get => _skipIsoHashVerification;
         set => SetProperty(ref _skipIsoHashVerification, value);
+    }
+
+    // Theme Adaptive Support
+    private bool _isDarkTheme = true;
+    public bool IsDarkTheme
+    {
+        get => _isDarkTheme;
+        set
+        {
+            if (SetProperty(ref _isDarkTheme, value))
+            {
+                NotifyThemeAdaptiveProperties();
+            }
+        }
+    }
+
+    public SolidColorBrush PreflightPrivilegeBackground => _diagnosticsService.IsElevated()
+        ? (IsDarkTheme ? new SolidColorBrush(Color.FromRgb(0x14, 0x29, 0x1E)) : new SolidColorBrush(Color.FromRgb(0xDC, 0xFC, 0xE7)))
+        : (IsDarkTheme ? new SolidColorBrush(Color.FromRgb(0x2A, 0x1E, 0x11)) : new SolidColorBrush(Color.FromRgb(0xFE, 0xF3, 0xC7)));
+
+    public SolidColorBrush PreflightPrivilegeBorder => _diagnosticsService.IsElevated()
+        ? (IsDarkTheme ? new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A)) : new SolidColorBrush(Color.FromRgb(0x86, 0xEF, 0xAC)))
+        : (IsDarkTheme ? new SolidColorBrush(Color.FromRgb(0xD9, 0x77, 0x06)) : new SolidColorBrush(Color.FromRgb(0xFC, 0xD3, 0x4D)));
+
+    public SolidColorBrush PreflightPrivilegeForeground => _diagnosticsService.IsElevated()
+        ? (IsDarkTheme ? new SolidColorBrush(Color.FromRgb(0x4A, 0xDE, 0x80)) : new SolidColorBrush(Color.FromRgb(0x15, 0x80, 0x3D)))
+        : (IsDarkTheme ? new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)) : new SolidColorBrush(Color.FromRgb(0xB4, 0x53, 0x09)));
+
+    public SymbolRegular PreflightPrivilegeIconSymbol => _diagnosticsService.IsElevated()
+        ? SymbolRegular.ShieldCheckmark24
+        : SymbolRegular.Warning24;
+
+    public SolidColorBrush QuickStartBackground => IsDarkTheme
+        ? new SolidColorBrush(Color.FromRgb(0x0F, 0x17, 0x2A))
+        : new SolidColorBrush(Color.FromRgb(0xF0, 0xF9, 0xFF));
+
+    public SolidColorBrush QuickStartBorder => IsDarkTheme
+        ? new SolidColorBrush(Color.FromRgb(0x1E, 0x29, 0x3B))
+        : new SolidColorBrush(Color.FromRgb(0xBA, 0xE6, 0xFD));
+
+    public SolidColorBrush QuickStartAccentText => IsDarkTheme
+        ? new SolidColorBrush(Color.FromRgb(0x38, 0xBD, 0xF8))
+        : new SolidColorBrush(Color.FromRgb(0x02, 0x84, 0xC7));
+
+    public SolidColorBrush QuickStartBodyText => IsDarkTheme
+        ? new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8))
+        : new SolidColorBrush(Color.FromRgb(0x47, 0x55, 0x69));
+
+    public SolidColorBrush QuickStartHighlightText => IsDarkTheme
+        ? new SolidColorBrush(Color.FromRgb(0xF1, 0xF5, 0xF9))
+        : new SolidColorBrush(Color.FromRgb(0x0F, 0x17, 0x2A));
+
+    public SolidColorBrush QuickStartSuccessText => IsDarkTheme
+        ? new SolidColorBrush(Color.FromRgb(0x4A, 0xDE, 0x80))
+        : new SolidColorBrush(Color.FromRgb(0x15, 0x80, 0x3D));
+
+    public void NotifyThemeAdaptiveProperties()
+    {
+        OnPropertyChanged(nameof(PreflightPrivilegeBackground));
+        OnPropertyChanged(nameof(PreflightPrivilegeBorder));
+        OnPropertyChanged(nameof(PreflightPrivilegeForeground));
+        OnPropertyChanged(nameof(PreflightPrivilegeIconSymbol));
+        OnPropertyChanged(nameof(QuickStartBackground));
+        OnPropertyChanged(nameof(QuickStartBorder));
+        OnPropertyChanged(nameof(QuickStartAccentText));
+        OnPropertyChanged(nameof(QuickStartBodyText));
+        OnPropertyChanged(nameof(QuickStartHighlightText));
+        OnPropertyChanged(nameof(QuickStartSuccessText));
     }
 
     // Preflight Summary Bar
@@ -456,6 +526,8 @@ public partial class StudioBuildViewModel : ObservableObject
         var (freeGb, _, isLow) = _diagnosticsService.GetDriveSpace(WorkspacePath);
         PreflightWorkspaceSummary = $"{freeGb:F1} GB free";
         IsLowDiskSpace = isLow;
+
+        NotifyThemeAdaptiveProperties();
     }
 
     private void AppendInitialBanner()

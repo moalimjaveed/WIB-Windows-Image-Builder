@@ -64,8 +64,14 @@
                                        FontWeight="Bold"
                                        Foreground="{DynamicResource TextFillColorPrimaryBrush}"
                                        VerticalAlignment="Center" />
-                            <Border Background="#1E293B" CornerRadius="4" Padding="6,1" Margin="10,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="v0.2.29" FontSize="11" FontWeight="SemiBold" Foreground="#38BDF8" />
+                            <Border Background="{Binding VersionBadgeBackground}"
+                                    BorderBrush="{Binding VersionBadgeBorder}"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    Padding="6,2"
+                                    Margin="10,0,0,0"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="v0.2.29" FontSize="11" FontWeight="SemiBold" Foreground="{Binding VersionBadgeForeground}" />
                             </Border>
                         </StackPanel>
                         <TextBlock Text="Hardware-adaptive, verifiable Windows 11 offline servicing engine"
@@ -75,60 +81,25 @@
                     </StackPanel>
                 </StackPanel>
 
-                <!-- Right: Session Privilege Pill Badge & Theme Toggle -->
+                <!-- Right: Session Privilege Subtle Rounded Box Badge & Theme Toggle -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Privilege Pill Badge -->
+                    <!-- Privilege Subtle Box Badge -->
                     <Border Margin="0,0,14,0"
-                            CornerRadius="14"
-                            Padding="12,5"
-                            BorderThickness="1">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsElevated}" Value="True">
-                                        <Setter Property="Background" Value="#1E3A2B" />
-                                        <Setter Property="BorderBrush" Value="#16A34A" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding IsElevated}" Value="False">
-                                        <Setter Property="Background" Value="#2E2214" />
-                                        <Setter Property="BorderBrush" Value="#D97706" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Margin="0,0,6,0">
-                                <ui:SymbolIcon.Style>
-                                    <Style TargetType="ui:SymbolIcon">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsElevated}" Value="True">
-                                                <Setter Property="Symbol" Value="ShieldCheckmark24" />
-                                                <Setter Property="Foreground" Value="#4ADE80" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding IsElevated}" Value="False">
-                                                <Setter Property="Symbol" Value="Warning24" />
-                                                <Setter Property="Foreground" Value="#F59E0B" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </ui:SymbolIcon.Style>
-                            </ui:SymbolIcon>
+                            CornerRadius="6"
+                            Padding="10,4"
+                            BorderThickness="1"
+                            Background="{Binding PrivilegeBadgeBackground}"
+                            BorderBrush="{Binding PrivilegeBadgeBorder}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <ui:SymbolIcon Symbol="{Binding PrivilegeIconSymbol}"
+                                           Foreground="{Binding PrivilegeBadgeForeground}"
+                                           FontSize="15"
+                                           Margin="0,0,6,0" />
                             <TextBlock Text="{Binding PrivilegeText}"
                                        FontSize="12"
-                                       FontWeight="SemiBold">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsElevated}" Value="True">
-                                                <Setter Property="Foreground" Value="#4ADE80" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding IsElevated}" Value="False">
-                                                <Setter Property="Foreground" Value="#F59E0B" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
+                                       FontWeight="SemiBold"
+                                       Foreground="{Binding PrivilegeBadgeForeground}"
+                                       VerticalAlignment="Center" />
                         </StackPanel>
                     </Border>
 
