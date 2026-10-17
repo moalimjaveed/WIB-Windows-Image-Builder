@@ -2100,6 +2100,7 @@ function Invoke-WibBuild {
         [switch]$Strict,
         [switch]$Force,
         [switch]$NoCheckpoints,
+        [string]$Compression = '',
         [string]$SigningCertThumbprint,
         [double]$MinFreeDiskSpaceGB = 25.0,
         [switch]$StrictOscdimgHash
@@ -2915,9 +2916,22 @@ function Invoke-WibBuild {
         $state.ImageMounted = $false
         Write-WibLog 'Install image saved.' 'INFO'
 
-        Write-WibLog 'Exporting install.wim (single edition, recovery compression)' 'STEP'
-        $compress = 'recovery'
-        if ($buildProfile.ContainsKey('output') -and $buildProfile['output'].ContainsKey('compression')) { $compress = $buildProfile['output']['compression'] }
+        $compress = if ($Compression) {
+            $Compression
+        } elseif ($NoCheckpoints) {
+            'max' # Fast Build prioritizes speed (2-3 min LZX vs 30+ min LZMS recovery)
+        } elseif ($buildProfile.ContainsKey('output') -and $buildProfile['output'].ContainsKey('compression')) {
+            $buildProfile['output']['compression']
+        } else {
+            'max'
+        }
+        $compressDesc = switch ($compress) {
+            'fast'     { 'fast LZNT1 compression' }
+            'recovery' { 'maximum LZMS recovery compression (slow)' }
+            'none'     { 'no compression' }
+            default    { 'standard LZX compression' }
+        }
+        Write-WibLog ("Exporting install.wim (single edition, {0})" -f $compressDesc) 'STEP'
         $wim2 = Join-Path $isoDir 'sources\install2.wim'
         $exportIndex = if ($ctx.ContainsKey('MountedIndex') -and $ctx.MountedIndex) { [int]$ctx.MountedIndex } elseif ($ctx.ContainsKey('CurrentIndex') -and $ctx.CurrentIndex) { [int]$ctx.CurrentIndex } else { [int]$Index }
         [void](Invoke-WibNativeTool -ToolKey 'dismExe' -FilePath 'dism.exe' -Arguments @('/Export-Image', "/SourceImageFile:$wim", "/SourceIndex:$exportIndex", "/DestinationImageFile:$wim2", "/Compress:$compress"))

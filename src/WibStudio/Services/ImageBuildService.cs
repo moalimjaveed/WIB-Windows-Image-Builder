@@ -25,6 +25,7 @@ public class BuildExecutionOptions
     public bool AcceptHighRiskModules { get; set; }
     public bool SkipIsoHashVerification { get; set; }
     public bool FastBuildNoCheckpoints { get; set; } = true;
+    public string Compression { get; set; } = "max";
 }
 
 public class ImageBuildService
@@ -141,6 +142,12 @@ public class ImageBuildService
         if (options.FastBuildNoCheckpoints && !options.ResumeFromCheckpoint)
         {
             argsList.Add("-NoCheckpoints");
+        }
+
+        if (!string.IsNullOrWhiteSpace(options.Compression))
+        {
+            argsList.Add("-Compression");
+            argsList.Add(options.Compression);
         }
 
         if (options.Hardware != null && !options.Hardware.IsLiveHost)

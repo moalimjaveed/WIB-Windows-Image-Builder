@@ -552,7 +552,8 @@ function Invoke-WibNativeTool {
             } catch { Write-Verbose $_.Exception.Message }
         }
 
-        while (-not $proc.WaitForExit(10)) {
+        $lastHeartbeat = [System.Diagnostics.Stopwatch]::StartNew()
+        while (-not $proc.WaitForExit(100)) {
             if (-not $script:WibDisableChildWorkingSetSampling) {
                 try {
                     $proc.Refresh()
@@ -560,6 +561,15 @@ function Invoke-WibNativeTool {
                     if ($ws -le 0) { $ws = [long]$proc.WorkingSet64 }
                     if ($ws -gt $peakWs) { $peakWs = $ws; $wsMeasured = $true }
                 } catch { Write-Verbose $_.Exception.Message }
+            }
+            if ($lastHeartbeat.ElapsedMilliseconds -ge 15000) {
+                $lastHeartbeat.Restart()
+                $elapsedSec = [math]::Round($sw.ElapsedMilliseconds / 1000)
+                $wsMb = if ($ws -gt 0) { [math]::Round($ws / 1MB) } else { 0 }
+                $wsInfo = if ($wsMb -gt 0) { ", working set ${wsMb} MB" } else { "" }
+                if (Get-Command Write-WibLog -ErrorAction SilentlyContinue) {
+                    Write-WibLog ("Tool '{0}' actively working (elapsed: {1}s{2})..." -f $ToolKey, $elapsedSec, $wsInfo) 'INFO'
+                }
             }
         }
         if (-not $script:WibDisableChildWorkingSetSampling) {

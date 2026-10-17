@@ -30,6 +30,7 @@ param(
     [switch]$Strict,
     [switch]$Force,
     [switch]$NoCheckpoints,
+    [ValidateSet('max', 'fast', 'recovery', 'none')][string]$Compression,
     [string]$SigningCertThumbprint,
     [int]$MinFreeDiskSpaceGB = 25,
     [string]$HardwareSpec,
@@ -216,7 +217,7 @@ if ($Command -eq 'plan') {
     Invoke-WibBuild -IsoPath $IsoPath -IsoDrive $IsoDrive -ExpectedIsoSha256 $ExpectedIsoSha256 -SkipIsoHash:$SkipIsoHash `
         -ProfilePath $profilePath -ToolRoot $toolRoot -WorkDir $WorkDir -OutputIso $OutputIso -Index $Index `
         -DryRun -KeepWork:$KeepWork -DownloadOscdimg:$DownloadOscdimg -Resume:$Resume -HardwareSpec $HardwareSpec -AcceptRisk:$AcceptRisk `
-        -DeltaFromManifest $DeltaFromManifest -Strict:$Strict -Force:$Force -NoCheckpoints:$NoCheckpoints `
+        -DeltaFromManifest $DeltaFromManifest -Strict:$Strict -Force:$Force -NoCheckpoints:$NoCheckpoints -Compression $Compression `
         -SigningCertThumbprint $SigningCertThumbprint -MinFreeDiskSpaceGB $MinFreeDiskSpaceGB
     return
 }
@@ -225,7 +226,7 @@ if ($Command -eq 'build') {
     Invoke-WibBuild -IsoPath $IsoPath -IsoDrive $IsoDrive -ExpectedIsoSha256 $ExpectedIsoSha256 -SkipIsoHash:$SkipIsoHash `
         -ProfilePath $profilePath -ToolRoot $toolRoot -WorkDir $WorkDir -OutputIso $OutputIso -Index $Index `
         -DryRun:$DryRun -KeepWork:$KeepWork -DownloadOscdimg:$DownloadOscdimg -Resume:$Resume -HardwareSpec $HardwareSpec -AcceptRisk:$AcceptRisk `
-        -DeltaFromManifest $DeltaFromManifest -Strict:$Strict -Force:$Force -NoCheckpoints:$NoCheckpoints `
+        -DeltaFromManifest $DeltaFromManifest -Strict:$Strict -Force:$Force -NoCheckpoints:$NoCheckpoints -Compression $Compression `
         -SigningCertThumbprint $SigningCertThumbprint -MinFreeDiskSpaceGB $MinFreeDiskSpaceGB
     return
 }

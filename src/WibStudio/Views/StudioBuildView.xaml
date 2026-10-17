@@ -258,6 +258,14 @@
                                          IsChecked="{Binding SkipIsoHashVerification}"
                                          ToolTip="Skip calculating the full SHA-256 hash of the input ISO file (faster dry-run testing)"
                                          Margin="0,0,24,6" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,24,6">
+                            <TextBlock Text="Compression:" VerticalAlignment="Center" Margin="0,0,8,0" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <ComboBox Width="270"
+                                      ItemsSource="{Binding CompressionOptions}"
+                                      SelectedItem="{Binding SelectedCompressionOption}"
+                                      DisplayMemberPath="DisplayName"
+                                      ToolTip="Export WIM compression algorithm. Standard (LZX) is recommended and takes ~2 minutes. Maximum (LZMS) takes 20-30 minutes." />
+                        </StackPanel>
                     </WrapPanel>
                 </Border>
             </StackPanel>

@@ -61,6 +61,14 @@ public partial class StudioBuildViewModel : ObservableObject
 
         WorkspacePath = WibPathResolver.GetDefaultWorkspaceDirectory();
 
+        CompressionOptions = new ObservableCollection<CompressionOption>
+        {
+            new CompressionOption { Key = "max", DisplayName = "Standard (LZX / Max) — Recommended (2-3 min)", Description = "Official Windows installer format. Fast and robust (~2-3 minutes)." },
+            new CompressionOption { Key = "fast", DisplayName = "Ultra Fast (LZNT1) — (~1 min)", Description = "Fastest export (~1 minute), slightly larger ISO size." },
+            new CompressionOption { Key = "recovery", DisplayName = "Maximum Recovery (LZMS) — (20-30 min)", Description = "Extreme dictionary compression. Slowest export (20-30 minutes), smallest file size." }
+        };
+        SelectedCompressionOption = CompressionOptions[0];
+
         UpdatePreflight();
         AppendInitialBanner();
     }
@@ -127,6 +135,15 @@ public partial class StudioBuildViewModel : ObservableObject
     {
         get => _selectedHardware;
         set => SetProperty(ref _selectedHardware, value);
+    }
+
+    public ObservableCollection<CompressionOption> CompressionOptions { get; }
+
+    private CompressionOption _selectedCompressionOption = null!;
+    public CompressionOption SelectedCompressionOption
+    {
+        get => _selectedCompressionOption;
+        set => SetProperty(ref _selectedCompressionOption, value);
     }
 
     public string ProfileHelperText => SelectedProfile?.SummaryText ?? "";
@@ -598,7 +615,8 @@ public partial class StudioBuildViewModel : ObservableObject
             DownloadSignedOscdimg = DownloadSignedOscdimg,
             AcceptHighRiskModules = AcceptHighRiskModules,
             SkipIsoHashVerification = SkipIsoHashVerification,
-            FastBuildNoCheckpoints = FastBuild
+            FastBuildNoCheckpoints = FastBuild,
+            Compression = SelectedCompressionOption?.Key ?? "max"
         };
 
         try
@@ -649,4 +667,11 @@ public partial class StudioBuildViewModel : ObservableObject
     }
 
     #endregion
+}
+
+public class CompressionOption
+{
+    public required string Key { get; set; }
+    public required string DisplayName { get; set; }
+    public required string Description { get; set; }
 }
