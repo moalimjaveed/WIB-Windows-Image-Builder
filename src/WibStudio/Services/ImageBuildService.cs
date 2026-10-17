@@ -24,6 +24,7 @@ public class BuildExecutionOptions
     public bool DownloadSignedOscdimg { get; set; }
     public bool AcceptHighRiskModules { get; set; }
     public bool SkipIsoHashVerification { get; set; }
+    public bool FastBuildNoCheckpoints { get; set; } = true;
 }
 
 public class ImageBuildService
@@ -137,10 +138,17 @@ public class ImageBuildService
             argsList.Add("-SkipIsoHash");
         }
 
+        if (options.FastBuildNoCheckpoints && !options.ResumeFromCheckpoint)
+        {
+            argsList.Add("-NoCheckpoints");
+        }
+
         if (options.Hardware != null && !options.Hardware.IsLiveHost)
         {
+            string specFile = Path.Combine(repoRoot, "specs", $"{options.Hardware.Id}.json");
+            string specArg = File.Exists(specFile) ? specFile : options.Hardware.Id;
             argsList.Add("-HardwareSpec");
-            argsList.Add($"\"{options.Hardware.Id}\"");
+            argsList.Add($"\"{specArg}\"");
         }
 
         string fullArgs = string.Join(" ", argsList);

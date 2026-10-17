@@ -1529,6 +1529,11 @@ try {
         $specHw = Get-WibHardwareProfile -SpecPath $sampleSpecPath
         Assert ($specHw.Confidence -eq 'high') 'Spec-file hardware profile reports high confidence'
         Assert ($specHw.HardwareProfileHash -and $specHw.HardwareProfileHash.Length -eq 64) 'HardwareProfileHash is valid 64-char SHA-256'
+
+        # Resolution of bare spec identifiers without .json or directory path
+        $bareSpecHw = Get-WibHardwareProfile -SpecPath 'laptop'
+        Assert ($bareSpecHw.Confidence -eq 'high') 'Bare spec identifier "laptop" resolves and reports high confidence'
+        Assert ($bareSpecHw.HardwareProfileHash -eq $specHw.HardwareProfileHash) 'Bare spec identifier produces identical HardwareProfileHash as full path'
     }
     $liveHw = Get-WibHardwareProfile
     Assert ($liveHw.Confidence -in @('high', 'provisional', 'unknown')) 'Live-host hardware profile reports valid confidence tier'

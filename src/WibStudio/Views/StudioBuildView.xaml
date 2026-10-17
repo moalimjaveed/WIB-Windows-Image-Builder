@@ -250,6 +250,10 @@
                                          IsChecked="{Binding AcceptHighRiskModules}"
                                          ToolTip="Allow high-risk customizations (such as disabling UAC or Defender). Not recommended for daily PCs."
                                          Margin="0,0,24,6" />
+                        <ui:ToggleSwitch Content="Fast build (skip intermediate checkpoints)"
+                                         IsChecked="{Binding FastBuild}"
+                                         ToolTip="Recommended: Speeds up servicing significantly by applying all modifications directly and saving once at the end, eliminating multi-gigabyte intermediate WIM snapshots"
+                                         Margin="0,0,24,6" />
                         <ui:ToggleSwitch Content="Skip ISO hash verification"
                                          IsChecked="{Binding SkipIsoHashVerification}"
                                          ToolTip="Skip calculating the full SHA-256 hash of the input ISO file (faster dry-run testing)"

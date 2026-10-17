@@ -38,9 +38,27 @@ function Get-WibHardwareProfile {
 
     # 1. User-supplied target hardware specification file
     if ($SpecPath) {
-        if (-not (Test-Path -LiteralPath $SpecPath)) {
+        $resolvedSpec = $SpecPath
+        if (-not (Test-Path -LiteralPath $resolvedSpec)) {
+            $root = if ($PSScriptRoot) { Split-Path -Parent $PSScriptRoot } else { Get-Location }
+            $candidates = @(
+                (Join-Path $root "specs\$SpecPath.json"),
+                (Join-Path $root "specs\$SpecPath"),
+                (Join-Path (Get-Location) "specs\$SpecPath.json"),
+                (Join-Path (Get-Location) "specs\$SpecPath"),
+                (Join-Path (Get-Location) "$SpecPath.json")
+            )
+            foreach ($c in $candidates) {
+                if (Test-Path -LiteralPath $c) {
+                    $resolvedSpec = (Get-Item -LiteralPath $c).FullName
+                    break
+                }
+            }
+        }
+        if (-not (Test-Path -LiteralPath $resolvedSpec)) {
             throw "Hardware spec file not found: $SpecPath"
         }
+        $SpecPath = $resolvedSpec
         Write-WibLog "Loading hardware profile from spec file: $SpecPath" 'INFO'
         $raw = Get-Content -LiteralPath $SpecPath -Raw | ConvertFrom-Json
         $spec = ConvertTo-WibHashtable $raw

@@ -2147,6 +2147,9 @@ function Invoke-WibBuild {
     if ($hwProfile) {
         Write-WibLog "Adaptive Mode: Target hardware: $($hwProfile.RamGB) GB RAM, $($hwProfile.StorageType), $($hwProfile.CpuCores) cores, $($hwProfile.GpuType) GPU ($($hwProfile.FormFactor)) [Source: $($hwProfile.Source), Confidence: $($hwProfile.Confidence)]" 'INFO'
         Write-WibLog "Hardware profile canonical hash: $hwProfileHash" 'INFO'
+        if ($hwProfile.SpecFile -and (Test-Path -LiteralPath $hwProfile.SpecFile)) {
+            $HardwareSpec = $hwProfile.SpecFile
+        }
     }
 
     if (-not $WorkDir) { $WorkDir = Join-Path $ToolRoot 'work' }

@@ -167,6 +167,13 @@ public partial class StudioBuildViewModel : ObservableObject
         set => SetProperty(ref _skipIsoHashVerification, value);
     }
 
+    private bool _fastBuild = true;
+    public bool FastBuild
+    {
+        get => _fastBuild;
+        set => SetProperty(ref _fastBuild, value);
+    }
+
     // Theme Adaptive Support
     private bool _isDarkTheme = true;
     public bool IsDarkTheme
@@ -590,7 +597,8 @@ public partial class StudioBuildViewModel : ObservableObject
             ResumeFromCheckpoint = ResumeFromCheckpoint,
             DownloadSignedOscdimg = DownloadSignedOscdimg,
             AcceptHighRiskModules = AcceptHighRiskModules,
-            SkipIsoHashVerification = SkipIsoHashVerification
+            SkipIsoHashVerification = SkipIsoHashVerification,
+            FastBuildNoCheckpoints = FastBuild
         };
 
         try

@@ -153,6 +153,20 @@ if ($Command -eq 'list') {
 $profilePath = $ProfileName
 if (-not (Test-Path -LiteralPath $profilePath)) { $profilePath = Join-Path $toolRoot "profiles\$ProfileName.json" }
 
+if ($HardwareSpec) {
+    if (-not (Test-Path -LiteralPath $HardwareSpec)) {
+        $candidateHw = Join-Path $toolRoot "specs\$HardwareSpec.json"
+        if (Test-Path -LiteralPath $candidateHw) {
+            $HardwareSpec = (Get-Item -LiteralPath $candidateHw).FullName
+        } else {
+            $candidateHw2 = Join-Path $toolRoot "specs\$HardwareSpec"
+            if (Test-Path -LiteralPath $candidateHw2) {
+                $HardwareSpec = (Get-Item -LiteralPath $candidateHw2).FullName
+            }
+        }
+    }
+}
+
 if ($Command -eq 'validate') {
     Write-Host "Validating profile: $profilePath" -ForegroundColor Cyan
     $p = Import-WibProfile -Path $profilePath
